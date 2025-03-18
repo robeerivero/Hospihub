@@ -8,26 +8,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cita_id']) && isset($_
 
     // Conectar a la base de datos
     include('../conexion.php');
-    $conexion = conexion();
+    $conexion = new mysqli($host, $usuario, $password, $base_de_datos);
+
+    // Verificar si la conexión fue exitosa
+    if ($conexion->connect_error) {
+        die("Conexión fallida: " . $conexion->connect_error);
+    }
 
     // Preparar la consulta para insertar el diagnóstico
-    $sqlDiagnostico = "BEGIN Insertar.Insertar_Diagnostico(:cita_id, :descripcion, :recomendacion); END;";
-    $stmtDiagnostico = oci_parse($conexion, $sqlDiagnostico);
+    $sqlDiagnostico = "INSERT INTO Diagnostico (cita_id, descripcion, recomendacion) VALUES (?, ?, ?)";
+    $stmtDiagnostico = $conexion->prepare($sqlDiagnostico);
 
     // Bind de los parámetros
-    oci_bind_by_name($stmtDiagnostico, ":cita_id", $cita_id);
-    oci_bind_by_name($stmtDiagnostico, ":descripcion", $descripcion);
-    oci_bind_by_name($stmtDiagnostico, ":recomendacion", $recomendacion);
+    $stmtDiagnostico->bind_param("iss", $cita_id, $descripcion, $recomendacion);
 
     // Ejecutar la consulta para insertar el diagnóstico
-    $resultadoDiagnostico = oci_execute($stmtDiagnostico);
+    $resultadoDiagnostico = $stmtDiagnostico->execute();
 
     // Verificar si la inserción del diagnóstico fue exitosa
     if ($resultadoDiagnostico) {
         echo "El diagnóstico se ha insertado correctamente.<br>";
 
         // Obtener el ID del diagnóstico insertado
-        $idDiagnostico = obtenerIdDiagnostico($conexion);
+        $idDiagnostico = $conexion->insert_id;
 
         // Verificar si se recibieron los datos de los medicamentos
         if (isset($_POST['nombre_medicamento']) && isset($_POST['frecuencia'])) {
@@ -36,8 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cita_id']) && isset($_
             $frecuencias = $_POST['frecuencia'];
 
             // Preparar la consulta para insertar los medicamentos asociados al diagnóstico
-            $sqlMedicamento = "BEGIN Insertar_Medicamento(:id_diagnostico, :nombre_medicamento, :frecuencia); END;";
-            $stmtMedicamento = oci_parse($conexion, $sqlMedicamento);
+            $sqlMedicamento = "INSERT INTO Medicamento (id_diagnostico, nombre_medicamento, frecuencia) VALUES (?, ?, ?)";
+            $stmtMedicamento = $conexion->prepare($sqlMedicamento);
 
             // Iterar sobre los datos de los medicamentos y ejecutar la consulta para cada uno
             for ($i = 0; $i < count($nombresMedicamentos); $i++) {
@@ -46,12 +49,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cita_id']) && isset($_
                 $frecuencia = $frecuencias[$i];
 
                 // Bind de los parámetros
-                oci_bind_by_name($stmtMedicamento, ":id_diagnostico", $idDiagnostico);
-                oci_bind_by_name($stmtMedicamento, ":nombre_medicamento", $nombreMedicamento);
-                oci_bind_by_name($stmtMedicamento, ":frecuencia", $frecuencia);
+                $stmtMedicamento->bind_param("iss", $idDiagnostico, $nombreMedicamento, $frecuencia);
 
                 // Ejecutar la consulta para insertar el medicamento
-                $resultadoMedicamento = oci_execute($stmtMedicamento);
+                $resultadoMedicamento = $stmtMedicamento->execute();
 
                 // Verificar si la inserción del medicamento fue exitosa
                 if ($resultadoMedicamento) {
@@ -68,34 +69,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cita_id']) && isset($_
     }
 
     // Cerrar las conexiones y liberar los recursos
-    oci_free_statement($stmtDiagnostico);
-    oci_free_statement($stmtMedicamento);
-    oci_close($conexion);
+    $stmtDiagnostico->close();
+    $stmtMedicamento->close();
+    $conexion->close();
 } else {
     echo "No se recibieron todos los datos necesarios.<br>";
 }
-
-// Función para obtener el ID del diagnóstico insertado
-function obtenerIdDiagnostico($conexion)
-{
-    // Preparar la consulta SQL para llamar a la función PL/SQL
-    $sql = "BEGIN :max_id := Obtener_Max_Id_Diagnostico(); END;";
-    $stmt = oci_parse($conexion, $sql);
-    
-    // Bind de los parámetros
-    oci_bind_by_name($stmt, ":max_id", $maxId, 100);
-    
-    // Ejecutar la consulta
-    oci_execute($stmt);
-    
-    // Verificar si se obtuvo un valor válido
-    if ($maxId !== null) {
-        return $maxId;
-    } else {
-        // Manejar el caso en el que la función devuelve NULL
-        // Aquí puedes lanzar una excepción o devolver un valor predeterminado
-        return -1; // Por ejemplo, devolver -1 si no se puede obtener el valor
-    }
-}
-
 ?>
