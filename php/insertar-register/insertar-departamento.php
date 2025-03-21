@@ -1,23 +1,35 @@
 <?php
-    // Conexión a la base de datos Oracle
+    // Conexión a la base de datos MySQL
     include('../conexion.php');
     $conexion = conexion();
 
     // Comprobar si se envió el formulario
-    if($_SERVER["REQUEST_METHOD"] == "POST"){
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Recuperar datos del formulario
         $nombre_hospital = $_POST["nombre_hospital"];
         $nombre_departamento = $_POST["nombre_departamento"];
         $ubicacion = $_POST["ubicacion"];
 
-        // Preparar y ejecutar la consulta SQL
-        $sql = "BEGIN Insertar.Insertar_Departamento(:nombre_hospital, :nombre_departamento, :ubicacion); END;";
-        $stid = oci_parse($conexion, $sql);
-        oci_bind_by_name($stid, ":nombre_hospital", $nombre_hospital);
-        oci_bind_by_name($stid, ":nombre_departamento", $nombre_departamento);
-        oci_bind_by_name($stid, ":ubicacion", $ubicacion);
-        oci_execute($stid);
-        oci_error();
+        // Preparar la llamada al procedimiento almacenado
+        $sql = "CALL Insertar_Departamento(?, ?, ?)";
+        $stmt = mysqli_prepare($conexion, $sql);
+
+        if ($stmt) {
+            // Vincular los parámetros
+            mysqli_stmt_bind_param($stmt, "sss", $nombre_hospital, $nombre_departamento, $ubicacion);
+
+            // Ejecutar la sentencia
+            if (mysqli_stmt_execute($stmt)) {
+                echo "Departamento insertado correctamente.";
+            } else {
+                echo "Error al insertar el departamento: " . mysqli_error($conexion);
+            }
+
+            // Cerrar la sentencia
+            mysqli_stmt_close($stmt);
+        } else {
+            echo "Error al preparar la consulta: " . mysqli_error($conexion);
+        }
     }
 ?>
 
