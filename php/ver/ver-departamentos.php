@@ -1,3 +1,18 @@
+<?php
+include('../conexion.php');
+$conexion = conexion();
+
+// Consulta SQL corregida para obtener los departamentos con la dirección del hospital
+$sql = "SELECT d.id_departamento, d.nombre AS nombre_departamento, d.ubicacion, 
+               h.id_hospital, h.nombre AS nombre_hospital, 
+               dir.ciudad AS ciudad_hospital, dir.calle AS calle_hospital
+        FROM departamento d
+        JOIN hospital h ON d.id_hospital = h.id_hospital
+        JOIN direccion dir ON h.id_direccion = dir.id_direccion";
+
+$result = mysqli_query($conexion, $sql);
+
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -14,61 +29,46 @@
             <div id="logo">HospiHub</div>
         </nav> 
     </header>
-           
 
     <br><br><br><br>
 
     <h1>Lista de Departamentos del Sistema</h1>
 
+    <table class='table table-striped'>
+        <thead>
+            <tr>
+                <th>Id del Departamento</th>
+                <th>Nombre Departamento</th>
+                <th>Ubicación Departamento</th>
+                <th>Id Hospital</th>
+                <th>Nombre Hospital</th>
+                <th>Ciudad Hospital</th>
+                <th>Calle Hospital</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while ($row = mysqli_fetch_assoc($result)) { ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($row['id_departamento']); ?></td>
+                    <td><?php echo htmlspecialchars($row['nombre_departamento']); ?></td>
+                    <td><?php echo htmlspecialchars($row['ubicacion']); ?></td>
+                    <td><?php echo htmlspecialchars($row['id_hospital']); ?></td>
+                    <td><?php echo htmlspecialchars($row['nombre_hospital']); ?></td>
+                    <td><?php echo htmlspecialchars($row['ciudad_hospital']); ?></td>
+                    <td><?php echo htmlspecialchars($row['calle_hospital']); ?></td>
+                </tr>
+            <?php } ?>
+        </tbody>
+    </table>
 
     <?php
-// Conecta al servicio XE (esto es, una base de datos) en el servidor "localhost"
-include('../conexion.php');
-$conexion = conexion();
+    // Liberar resultados y cerrar la conexión
+    mysqli_free_result($result);
+    mysqli_close($conexion);
+    ?>
 
-// Preparar la llamada al procedimiento almacenado
-$cursor = oci_new_cursor($conexion);
-$consulta = oci_parse($conexion, "BEGIN :cursor := Obtener.Obtener_Departamentos_Hospitales_Cursor; END;");
-
-// Asignar el parámetro de salida para el cursor
-oci_bind_by_name($consulta, ":cursor", $cursor, -1, OCI_B_CURSOR);
-
-// Ejecutar la consulta
-oci_execute($consulta);
-oci_execute($cursor);
-
-// Mostrar los resultados en una tabla
-echo "<table class='table table-striped'>\n";
-echo "<thead>";
-echo "<tr>";
-echo "<th>Id del Departamento</th>";
-echo "<th>Nombre Departamento</th>";
-echo "<th>Ubicacion Departamento</th>";
-echo "<th>Id Hospital</th>";
-echo "<th>Nombre Hospital</th>";
-echo "<th>Ciudad Hospital</th>";
-echo "<th>Calle Hospital</th>";
-echo "</tr>";
-echo "</thead>";
-while ($row = oci_fetch_array($cursor, OCI_ASSOC+OCI_RETURN_NULLS)) {
-    echo "<tr>\n";
-    foreach ($row as $item) {
-        echo "    <td>" . ($item !== null ? htmlentities($item, ENT_QUOTES) : "") . "</td>\n";
-    }
-    echo "</tr>\n";
-}
-echo "</table>\n";
-
-// Liberar recursos
-oci_free_statement($consulta);
-oci_close($conexion);
-?>
-
-
-<a href="../menu-admin.php">Regresar al menú del administrador <span class="material-symbols-outlined">
-            arrow_left_alt
-            </span></a> <br>
-
-
+    <a href="../menu-admin.php">Regresar al menú del administrador <span class="material-symbols-outlined">
+        arrow_left_alt
+        </span></a> <br>
 </body>
 </html>
