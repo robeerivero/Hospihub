@@ -1,3 +1,15 @@
+<?php
+include('../conexion.php');
+$conexion = conexion();
+
+// Consulta SQL para obtener los pacientes junto con la ciudad y calle de la tabla direccion
+$sql = "SELECT p.id_paciente, p.nombre, p.apellidos, p.telefono, p.fecha_nacimiento, d.ciudad, d.calle, p.email, p.pin 
+        FROM paciente p
+        JOIN direccion d ON p.id_direccion = d.id_direccion";
+
+$result = mysqli_query($conexion, $sql);
+
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -19,55 +31,46 @@
     
     <h1>Lista de Pacientes del Sistema</h1>
 
+    <table class='table table-striped'>
+        <thead>
+            <tr>
+                <th>Id del Paciente</th>
+                <th>Nombre</th>
+                <th>Apellidos</th>
+                <th>Teléfono</th>
+                <th>Fecha de Nacimiento</th>
+                <th>Ciudad</th>
+                <th>Calle</th>
+                <th>Email</th>
+                <th>PIN</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while ($row = mysqli_fetch_assoc($result)) { ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($row['id_paciente']); ?></td>
+                    <td><?php echo htmlspecialchars($row['nombre']); ?></td>
+                    <td><?php echo htmlspecialchars($row['apellidos']); ?></td>
+                    <td><?php echo htmlspecialchars($row['telefono']); ?></td>
+                    <td><?php echo htmlspecialchars($row['fecha_nacimiento']); ?></td>
+                    <td><?php echo htmlspecialchars($row['ciudad']); ?></td>
+                    <td><?php echo htmlspecialchars($row['calle']); ?></td>
+                    <td><?php echo htmlspecialchars($row['email']); ?></td>
+                    <td><?php echo htmlspecialchars($row['pin']); ?></td>
+                </tr>
+            <?php } ?>
+        </tbody>
+    </table>
+
     <?php
-// Conecta al servicio XE (esto es, una base de datos) en el servidor "localhost"
-include('../conexion.php');
-$conexion = conexion();
+    // Liberar resultados y cerrar la conexión
+    mysqli_free_result($result);
+    mysqli_close($conexion);
+    ?>
 
-// Preparar la llamada al procedimiento almacenado
-$cursor = oci_new_cursor($conexion);
-$consulta = oci_parse($conexion, "BEGIN :cursor := Obtener.Obtener_Pacientes_Cursor; END;");
-
-// Asignar el parámetro de salida para el cursor
-oci_bind_by_name($consulta, ":cursor", $cursor, -1, OCI_B_CURSOR);
-
-// Ejecutar la consulta
-oci_execute($consulta);
-oci_execute($cursor);
-
-// Mostrar los resultados en una tabla
-echo "<table class='table table-striped'>\n";
-echo "<thead>";
-echo "<tr>";
-echo "<th>Id del Paciente</th>";
-echo "<th>Nombre</th>";
-echo "<th>Apellidos</th>";
-echo "<th>Telefono</th>";
-echo "<th>Fecha de nacimiento</th>";
-echo "<th>Ciudad</th>";
-echo "<th>Calle</th>";
-echo "<th>Email</th>";
-echo "<th>PIN</th>";
-echo "</tr>";
-echo "</thead>";
-while ($row = oci_fetch_array($cursor, OCI_ASSOC+OCI_RETURN_NULLS)) {
-    echo "<tr>\n";
-    foreach ($row as $item) {
-        echo "<td>" . ($item !== null ? htmlentities($item, ENT_QUOTES) : "") . "</td>\n";
-    }
-    echo "</tr>\n";
-}
-echo "</table>\n";
-
-// Liberar recursos
-oci_free_statement($consulta);
-oci_close($conexion);
-?>
-
-<a href="../menu-admin.php">Regresar al menú del administrador <span class="material-symbols-outlined">
+    <a href="../menu-admin.php">Regresar al menú del administrador <span class="material-symbols-outlined">
             arrow_left_alt
-            </span></a> <br>
-
+        </span></a> <br>
 
 </body>
 </html>

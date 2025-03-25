@@ -15,18 +15,16 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <!-- Enlaces a los archivos CSS -->
     <link rel="stylesheet" href="../css/register.css">
-    <!-- Enlace al archivo JavaScript -->
-    
 </head>
 <body>
 
 <?php
-    // Conexión a la base de datos Oracle
+    // Conexión a la base de datos MySQL
     include('../conexion.php');
     $conexion = conexion();
 
     // Comprobar si se envió el formulario
-    if($_SERVER["REQUEST_METHOD"] == "POST"){
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Recuperar datos del formulario
         $nombre = $_POST["nombre"];
         $apellidos = $_POST["apellidos"];
@@ -39,21 +37,26 @@
         $hospital = $_POST["hospital"];
         $departamento = $_POST["departamento"];
 
-        // Preparar y ejecutar la consulta SQL
-        $sql = "BEGIN Insertar.Insertar_Medico(:hospital,:departamento, :nombre, :apellidos, :telefono, TO_DATE(:fecha_nacimiento, 'YYYY-MM-DD'), :ciudad, :calle, :email, :pin); END;";
-        $stid = oci_parse($conexion, $sql);
-        oci_bind_by_name($stid, ":nombre", $nombre);
-        oci_bind_by_name($stid, ":apellidos", $apellidos);
-        oci_bind_by_name($stid, ":telefono", $telefono);
-        oci_bind_by_name($stid, ":fecha_nacimiento", $fecha_nacimiento);
-        oci_bind_by_name($stid, ":ciudad", $ciudad);
-        oci_bind_by_name($stid, ":calle", $calle);
-        oci_bind_by_name($stid, ":email", $email);
-        oci_bind_by_name($stid, ":pin", $pin);
-        oci_bind_by_name($stid, ":departamento", $departamento);
-        oci_bind_by_name($stid, ":hospital", $hospital);
-        oci_execute($stid);
-        oci_error();
+        // Preparar la llamada al procedimiento almacenado
+        $sql = "CALL Insertar_Medico(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = mysqli_prepare($conexion, $sql);
+
+        if ($stmt) {
+            // Vincular los parámetros
+            mysqli_stmt_bind_param($stmt, "ssssssssss", $hospital, $departamento, $nombre, $apellidos, $telefono, $fecha_nacimiento, $ciudad, $calle, $email, $pin);
+
+            // Ejecutar la sentencia
+            if (mysqli_stmt_execute($stmt)) {
+                echo "<p style='color: green;'>Médico registrado correctamente.</p>";
+            } else {
+                echo "<p style='color: red;'>Error al registrar el médico: " . mysqli_error($conexion) . "</p>";
+            }
+
+            // Cerrar la sentencia
+            mysqli_stmt_close($stmt);
+        } else {
+            echo "<p style='color: red;'>Error al preparar la consulta: " . mysqli_error($conexion) . "</p>";
+        }
     }
 ?>
 

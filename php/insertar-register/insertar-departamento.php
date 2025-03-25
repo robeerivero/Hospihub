@@ -1,23 +1,48 @@
+<!--NO FUNCIONA BIEN, NO AÑADE EL ID DEL HOSPITAL NI MUESTRA MENSAJES
+DE ERRORES AL REGISTRAR DEPARTAMENTO INCORRECTO -->
+
 <?php
-    // Conexión a la base de datos Oracle
+    // Conexión a la base de datos MySQL
     include('../conexion.php');
     $conexion = conexion();
-
+    
     // Comprobar si se envió el formulario
-    if($_SERVER["REQUEST_METHOD"] == "POST"){
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Recuperar datos del formulario
         $nombre_hospital = $_POST["nombre_hospital"];
         $nombre_departamento = $_POST["nombre_departamento"];
         $ubicacion = $_POST["ubicacion"];
 
-        // Preparar y ejecutar la consulta SQL
-        $sql = "BEGIN Insertar.Insertar_Departamento(:nombre_hospital, :nombre_departamento, :ubicacion); END;";
-        $stid = oci_parse($conexion, $sql);
-        oci_bind_by_name($stid, ":nombre_hospital", $nombre_hospital);
-        oci_bind_by_name($stid, ":nombre_departamento", $nombre_departamento);
-        oci_bind_by_name($stid, ":ubicacion", $ubicacion);
-        oci_execute($stid);
-        oci_error();
+        // Preparar la llamada al procedimiento almacenado
+        $sql = "CALL Insertar_Departamento(?, ?, ?)";
+        $stmt = mysqli_prepare($conexion, $sql);
+
+        if ($stmt) {
+            // Vincular los parámetros
+            mysqli_stmt_bind_param($stmt, "sss", $nombre_hospital, $nombre_departamento, $ubicacion);
+
+            // Ejecutar la sentencia
+            if (mysqli_stmt_execute($stmt)) {
+                // Obtener el mensaje de éxito
+                mysqli_stmt_store_result($stmt);
+                mysqli_stmt_bind_result($stmt, $mensaje);
+                mysqli_stmt_fetch($stmt);
+                echo "<p style='color: green;'>$mensaje</p>";
+            } else {
+                // Capturar el error específico del procedimiento almacenado
+                $error = mysqli_error($conexion);
+                if (strpos($error, "El hospital no existe") !== false) {
+                    echo "<p style='color: red;'>Error: El hospital no existe.</p>";
+                } else {
+                    echo "<p style='color: red;'>Error al insertar el departamento: $error</p>";
+                }
+            }
+
+            // Cerrar la sentencia
+            mysqli_stmt_close($stmt);
+        } else {
+            echo "<p style='color: red;'>Error al preparar la consulta: " . mysqli_error($conexion) . "</p>";
+        }
     }
 ?>
 
@@ -37,8 +62,6 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <!-- Enlaces a los archivos CSS -->
     <link rel="stylesheet" href="../css/register.css">
-    <!-- Enlace al archivo JavaScript -->
-    
 </head>
 <body>
 
@@ -77,6 +100,5 @@
             arrow_left_alt
             </span></a> <br>
 
-    
 </body>
 </html>

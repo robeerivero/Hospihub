@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
     <!-- Metadatos del autor y diseñador del sitio -->
-    <meta name="author" content="Carlos Antonio Cortés Lora, Roberto Rivero Díaz">
-    <meta name="designer" content="Carlos Antonio Cortés Lora, Roberto Rivero Díaz">
+    <meta name="author" content="Jesús Javier Gallego Ibañez, Roberto Rivero Díaz, David Conde Salado">
+    <meta name="designer" content="Jesús Javier Gallego Ibañez, Roberto Rivero Díaz, David Conde Salado">
     <!-- Enlaces a las fuentes de Google y hojas de estilos -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,8 +15,6 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <!-- Enlaces a los archivos CSS -->
     <link rel="stylesheet" href="../css/procesar-citas.css">
-    <!-- Enlace al archivo JavaScript hola jefe -->
-    
 </head>
 <body>
     <header>   
@@ -33,21 +31,24 @@
         $id_cita = $_POST['cita_id'];
         $id_paciente = $_SESSION['id_paciente'];
         
-
         // Conectar a la base de datos
         include('../conexion.php');
-        $conexion = conexion();
+        $conexion = new mysqli($host, $user, $password, $dbname);
+        
+        // Verificar la conexión
+        if ($conexion->connect_error) {
+            die("Conexión fallida: " . $conexion->connect_error);
+        }
 
         // Preparar la consulta SQL para actualizar la cita con el ID del paciente y cambiar su estado
-        $sql = "BEGIN Otros.Asignar_Cita(:id_paciente, :id_cita); END;";
-        $stmt = oci_parse($conexion, $sql);
+        $sql = "CALL Otros.Asignar_Cita(?, ?)";
+        $stmt = $conexion->prepare($sql);
 
-        // Bind de los parámetros
-        oci_bind_by_name($stmt, ":id_paciente", $id_paciente);
-        oci_bind_by_name($stmt, ":id_cita", $id_cita);
+        // Vincular los parámetros
+        $stmt->bind_param("ii", $id_paciente, $id_cita);
 
         // Ejecutar la consulta
-        $resultado = oci_execute($stmt);
+        $resultado = $stmt->execute();
 
         // Verificar si la actualización fue exitosa
         if ($resultado) {
@@ -57,8 +58,8 @@
         }
 
         // Liberar recursos
-        oci_free_statement($stmt);
-        oci_close($conexion);
+        $stmt->close();
+        $conexion->close();
     } else {
         // Redireccionar si no se recibió el ID de la cita o el ID del paciente
         header("Location: elegir-citas.php");

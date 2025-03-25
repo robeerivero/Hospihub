@@ -1,22 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>HospiHub - Login de paciente</title>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>HospiHub - Login de paciente</title>
     <!-- Metadatos del autor y diseñador del sitio -->
-    <meta name="author" content="Carlos Antonio Cortés Lora, Roberto Rivero Díaz">
-    <meta name="designer" content="Carlos Antonio Cortés Lora, Roberto Rivero Díaz">
+    <meta name="author" content="David Conde Salado, Roberto Rivero Díaz, Jesús Javier Gallego Ibañez">
+    <meta name="designer" content="David Conde Salado, Roberto Rivero Díaz, Jesús Javier Gallego Ibañez">
     <!-- Enlaces a las fuentes de Google y hojas de estilos -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <!-- Enlaces a los archivos CSS -->
     <link rel="stylesheet" href="../css/procesar-diagnostico.css">
-    <!-- Enlace al archivo JavaScript -->
-    
 </head>
 <body>
 <header>   
@@ -24,10 +20,16 @@
         <div id="logo">HospiHub</div>
     </nav>
 </header>
+
 <?php
-// Conecta al servicio XE (esto es, una base de datos) en el servidor "localhost"
+// Conectar a la base de datos MySQL usando mysqli
 include('../conexion.php');
-$conexion = conexion();
+$conexion = new mysqli($host, $usuario, $password, $base_de_datos);
+
+// Verificar si la conexión fue exitosa
+if ($conexion->connect_error) {
+    die("Conexión fallida: " . $conexion->connect_error);
+}
 
 session_start();
 
@@ -41,7 +43,7 @@ echo "<br><br><br><br><h2>$email, estas son tus Citas pendientes de finalizar</h
 $sql = "SELECT 
             c.Id_Cita, 
             c.Fecha, 
-            TO_CHAR(c.Hora, 'HH24:MI:SS') AS Hora_Cita, 
+            DATE_FORMAT(c.Hora, '%H:%i:%s') AS Hora_Cita, 
             c.Id_Medico
         FROM 
             Tabla_Cita c
@@ -49,17 +51,16 @@ $sql = "SELECT
             JOIN Tabla_Departamento d ON m.Id_departamento = d.Id_departamento
             JOIN Tabla_Hospital h ON d.Id_hospital = h.Id_hospital
         WHERE
-            c.Id_Medico = :medico_id
+            c.Id_Medico = ?
             AND c.Estado = 'Paciente Asignado'";
 
 // Preparar la consulta
-$stid = oci_parse($conexion, $sql);
-
-// Bind de los parámetros
-oci_bind_by_name($stid, ":medico_id", $medico_id);
+$stmt = $conexion->prepare($sql);
+$stmt->bind_param("i", $medico_id);
 
 // Ejecutar la consulta
-oci_execute($stid);
+$stmt->execute();
+$result = $stmt->get_result();
 
 // Mostrar las citas en una tabla
 echo "<table class='table table-striped'>\n";
@@ -72,18 +73,24 @@ echo "<th>Id del Medico</th>";
 echo "<th>Insertar Diagnóstico</th>"; // Agregar una columna para el botón "Insertar Diagnóstico"
 echo "</tr>";
 echo "</thead>";
-while ($row = oci_fetch_array($stid, OCI_ASSOC+OCI_RETURN_NULLS)) {
+while ($row = $result->fetch_assoc()) {
     echo "<tr>\n";
     foreach ($row as $item) {
-        echo "    <td>" . ($item !== null ? htmlentities($item, ENT_QUOTES) : "") . "</td>\n";
+        echo "    <td>" . htmlentities($item, ENT_QUOTES) . "</td>\n";
     }
     // Agregar el botón "Añadir" en cada fila de la tabla
     echo "<td>";
-    echo "<button type='button' onclick='mostrarFormulario(\"" . $row['ID_CITA'] . "\")'>Añadir</button>"; // Botón "Añadir"
+    echo "<button type='button' onclick='mostrarFormulario(\"" . $row['Id_Cita'] . "\")'>Añadir</button>"; // Botón "Añadir"
     echo "</td>";
     echo "</tr>\n";
 }
 echo "</table>\n";
+
+// Cerrar la consulta
+$stmt->close();
+
+// Cerrar la conexión
+$conexion->close();
 ?>
 
 <!-- Script para mostrar el formulario emergente -->
@@ -104,10 +111,7 @@ function mostrarFormulario(idCita) {
     <button type="button" onclick="agregarMedicamento()" id="botonMedicamento">Añadir Medicamento</button><br><br>
     <input type="hidden" name="cita_id" value="${idCita}">
     <button type="button" onclick="enviarFormulario()">Insertar Diagnóstico</button><br><br>
-    <button type="button" href="../menu-medico.php" id="volver">Volver al menú de médico <span class="material-symbols-outlined">
-        home
-        </span>
-    </a>
+    <button type="button" onclick="window.location.href='../menu-medico.php'" id="volver">Volver al menú de médico <span class="material-symbols-outlined">home</span></button>
     `;
     document.body.appendChild(formulario);
 }
@@ -136,7 +140,5 @@ function enviarFormulario() {
 }
 </script>
 
-
-	
 </body>
 </html>

@@ -1,3 +1,17 @@
+<?php
+include('../conexion.php');
+$conexion = conexion();
+
+// Consulta SQL actualizada para obtener los médicos con dirección, departamento y hospital
+$sql = "SELECT m.id_medico, m.nombre AS nombre_medico, m.apellidos, m.telefono, m.fecha_nacimiento, dir.ciudad, dir.calle, m.email, m.pin, d.nombre AS nombre_departamento, d.id_departamento, h.nombre AS nombre_hospital 
+        FROM medico m
+        LEFT JOIN direccion dir ON m.id_direccion = dir.id_direccion
+        LEFT JOIN departamento d ON m.id_departamento = d.id_departamento
+        LEFT JOIN hospital h ON d.id_hospital = h.id_hospital";
+
+$result = mysqli_query($conexion, $sql);
+
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -18,61 +32,53 @@
 
     <br><br><br><br>
     
-    <h1>Lista de Medicos del Sistema</h1>
+    <h1>Lista de Médicos del Sistema</h1>
+
+    <table class='table table-striped'>
+        <thead>
+            <tr>
+                <th>Id del Médico</th>
+                <th>Nombre</th>
+                <th>Apellidos</th>
+                <th>Teléfono</th>
+                <th>Fecha de Nacimiento</th>
+                <th>Ciudad</th>
+                <th>Calle</th>
+                <th>Email</th>
+                <th>PIN</th>
+                <th>Nombre Departamento</th>
+                <th>Id Departamento</th>
+                <th>Nombre del Hospital</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while ($row = mysqli_fetch_assoc($result)) { ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($row['id_medico']); ?></td>
+                    <td><?php echo htmlspecialchars($row['nombre_medico']); ?></td>
+                    <td><?php echo htmlspecialchars($row['apellidos']); ?></td>
+                    <td><?php echo htmlspecialchars($row['telefono']); ?></td>
+                    <td><?php echo htmlspecialchars($row['fecha_nacimiento']); ?></td>
+                    <td><?php echo htmlspecialchars($row['ciudad']); ?></td>
+                    <td><?php echo htmlspecialchars($row['calle']); ?></td>
+                    <td><?php echo htmlspecialchars($row['email']); ?></td>
+                    <td><?php echo htmlspecialchars($row['pin']); ?></td>
+                    <td><?php echo htmlspecialchars($row['nombre_departamento']); ?></td>
+                    <td><?php echo htmlspecialchars($row['id_departamento']); ?></td>
+                    <td><?php echo htmlspecialchars($row['nombre_hospital']); ?></td>
+                </tr>
+            <?php } ?>
+        </tbody>
+    </table>
 
     <?php
-// Conecta al servicio XE (esto es, una base de datos) en el servidor "localhost"
-include('../conexion.php');
-$conexion = conexion();
+    mysqli_free_result($result);
+    mysqli_close($conexion);
+    ?>
 
-// Preparar la llamada al procedimiento almacenado
-$cursor = oci_new_cursor($conexion);
-$consulta = oci_parse($conexion, "BEGIN :cursor := Obtener.Obtener_Medicos_Cursor; END;");
-
-// Asignar el parámetro de salida para el cursor
-oci_bind_by_name($consulta, ":cursor", $cursor, -1, OCI_B_CURSOR);
-
-// Ejecutar la consulta
-oci_execute($consulta);
-oci_execute($cursor);
-
-// Mostrar los resultados en una tabla
-echo "<table class='table table-striped'>\n";
-echo "<thead>";
-echo "<tr>";
-echo "<th>Id del Médico</th>";
-echo "<th>Nombre</th>";
-echo "<th>Apellidos</th>";
-echo "<th>Telefono</th>";
-echo "<th>Fecha de nacimiento</th>";
-echo "<th>Ciudad</th>";
-echo "<th>Calle</th>";
-echo "<th>Email</th>";
-echo "<th>PIN</th>";
-echo "<th>Id Hospital</th>";
-echo "<th>Nombre Departamento</th>";
-echo "<th>Id Departamento</th>";
-echo "<th>Nombre del Hospital</th>";
-echo "</tr>";
-echo "</thead>";
-while ($row = oci_fetch_array($cursor, OCI_ASSOC+OCI_RETURN_NULLS)) {
-    echo "<tr>\n";
-    foreach ($row as $item) {
-        echo "<td>" . ($item !== null ? htmlentities($item, ENT_QUOTES) : "") . "</td>\n";
-    }
-    echo "</tr>\n";
-}
-echo "</table>\n";
-
-// Liberar recursos
-oci_free_statement($consulta);
-oci_close($conexion);
-?>
-
-
-<a href="../menu-admin.php">Regresar al menú del administrador <span class="material-symbols-outlined">
+    <a href="../menu-admin.php">Regresar al menú del administrador <span class="material-symbols-outlined">
             arrow_left_alt
-            </span></a> <br>
+        </span></a> <br>
 
 </body>
 </html>
