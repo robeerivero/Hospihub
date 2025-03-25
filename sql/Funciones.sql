@@ -1,6 +1,5 @@
 DELIMITER $$
 
-
 -- Procedimiento para insertar un paciente
 CREATE PROCEDURE Insertar_Paciente(
     IN nombre VARCHAR(50),
@@ -21,9 +20,12 @@ BEGIN
 
     START TRANSACTION;
 
-    -- Insertar la dirección
-    INSERT INTO Direccion (Ciudad, Calle) VALUES (ciudad, calle);
-    SET @id_direccion = LAST_INSERT_ID();
+    -- Insertar la dirección si no existe
+    INSERT INTO Direccion (Ciudad, Calle) 
+    SELECT ciudad, calle FROM DUAL
+    WHERE NOT EXISTS (SELECT 1 FROM Direccion WHERE Ciudad = ciudad AND Calle = calle);
+    
+    SET @id_direccion = (SELECT Id_direccion FROM Direccion WHERE Ciudad = ciudad AND Calle = calle LIMIT 1);
 
     -- Insertar el paciente
     INSERT INTO Paciente (Nombre, Apellidos, Telefono, Fecha_nacimiento, Id_direccion, Email, PIN)
@@ -64,9 +66,12 @@ BEGIN
     -- Obtener el ID del departamento
     SELECT Id_departamento INTO v_id_departamento FROM Departamento WHERE Nombre = nombre_departamento AND Id_hospital = v_id_hospital;
 
-    -- Insertar la dirección
-    INSERT INTO Direccion (Ciudad, Calle) VALUES (ciudad, calle);
-    SET @id_direccion = LAST_INSERT_ID();
+    -- Insertar la dirección si no existe
+    INSERT INTO Direccion (Ciudad, Calle) 
+    SELECT ciudad, calle FROM DUAL
+    WHERE NOT EXISTS (SELECT 1 FROM Direccion WHERE Ciudad = ciudad AND Calle = calle);
+    
+    SET @id_direccion = (SELECT Id_direccion FROM Direccion WHERE Ciudad = ciudad AND Calle = calle LIMIT 1);
 
     -- Insertar el médico
     INSERT INTO Medico (Id_departamento, Nombre, Apellidos, Telefono, Fecha_nacimiento, Id_direccion, Email, PIN)
@@ -96,8 +101,10 @@ BEGIN
     -- Obtener el ID del hospital
     SELECT Id_hospital INTO v_id_hospital FROM Hospital WHERE Nombre = nombre_hospital;
 
-    -- Insertar el departamento
-    INSERT INTO Departamento (Id_hospital, Nombre, Ubicacion) VALUES (v_id_hospital, nombre, ubicacion);
+    -- Insertar el departamento si no existe
+    INSERT INTO Departamento (Id_hospital, Nombre, Ubicacion) 
+    SELECT v_id_hospital, nombre, ubicacion FROM DUAL
+    WHERE NOT EXISTS (SELECT 1 FROM Departamento WHERE Nombre = nombre AND Id_hospital = v_id_hospital);
 
     COMMIT;
     SELECT 'Departamento insertado correctamente' AS Mensaje;
@@ -118,12 +125,17 @@ BEGIN
 
     START TRANSACTION;
 
-    -- Insertar la dirección
-    INSERT INTO Direccion (Ciudad, Calle) VALUES (ciudad, calle);
-    SET @id_direccion = LAST_INSERT_ID();
+    -- Insertar la dirección si no existe
+    INSERT INTO Direccion (Ciudad, Calle) 
+    SELECT ciudad, calle FROM DUAL
+    WHERE NOT EXISTS (SELECT 1 FROM Direccion WHERE Ciudad = ciudad AND Calle = calle);
+    
+    SET @id_direccion = (SELECT Id_direccion FROM Direccion WHERE Ciudad = ciudad AND Calle = calle LIMIT 1);
 
-    -- Insertar el hospital
-    INSERT INTO Hospital (Nombre, Id_direccion) VALUES (nombre, @id_direccion);
+    -- Insertar el hospital si no existe
+    INSERT INTO Hospital (Nombre, Id_direccion) 
+    SELECT nombre, @id_direccion FROM DUAL
+    WHERE NOT EXISTS (SELECT 1 FROM Hospital WHERE Nombre = nombre);
 
     COMMIT;
     SELECT 'Hospital insertado correctamente' AS Mensaje;
@@ -157,28 +169,11 @@ BEGIN
     SELECT 'Diagnóstico insertado correctamente' AS Mensaje;
 END$$
 
--- Procedimiento para insertar un medicamento
-CREATE PROCEDURE Insertar_Medicamento(
-    IN id_diagnostico INT,
-    IN nombre_medicamento VARCHAR(50),
-    IN frecuencia VARCHAR(100)
-)
-BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error al insertar el medicamento';
-    END;
+DELIMITER ;
 
-    START TRANSACTION;
 
-    -- Insertar el medicamento
-    INSERT INTO Medicamento (Id_diagnostico, Nombre, Frecuencia) VALUES (id_diagnostico, nombre_medicamento, frecuencia);
 
-    COMMIT;
-    SELECT 'Medicamento insertado correctamente' AS Mensaje;
-END$$
-
+DELIMITER $$
 
 -- Procedimiento para eliminar un paciente
 CREATE PROCEDURE Eliminar_Paciente(
@@ -193,6 +188,9 @@ BEGIN
 
     START TRANSACTION;
 
+    -- Eliminar citas asociadas al paciente
+    DELETE FROM Cita WHERE Id_paciente = (SELECT Id_paciente FROM Paciente WHERE Email = email_paciente);
+    
     -- Eliminar el paciente
     DELETE FROM Paciente WHERE Email = email_paciente;
 
@@ -213,6 +211,9 @@ BEGIN
 
     START TRANSACTION;
 
+    -- Eliminar citas asociadas al médico
+    DELETE FROM Cita WHERE Id_medico = (SELECT Id_medico FROM Medico WHERE Email = email_medico);
+    
     -- Eliminar el médico
     DELETE FROM Medico WHERE Email = email_medico;
 
@@ -227,7 +228,8 @@ CREATE PROCEDURE Eliminar_Departamento(
 )
 BEGIN
     DECLARE v_id_hospital INT;
-
+    DECLARE v_id_departamento INT;
+    
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
@@ -238,9 +240,16 @@ BEGIN
 
     -- Obtener el ID del hospital
     SELECT Id_hospital INTO v_id_hospital FROM Hospital WHERE Nombre = nombre_hospital;
-
+    
+    -- Obtener el ID del departamento
+    SELECT Id_departamento INTO v_id_departamento FROM Departamento 
+    WHERE Nombre = nombre_departamento AND Id_hospital = v_id_hospital;
+    
+    -- Eliminar médicos asociados al departamento
+    DELETE FROM Medico WHERE Id_departamento = v_id_departamento;
+    
     -- Eliminar el departamento
-    DELETE FROM Departamento WHERE Nombre = nombre_departamento AND Id_hospital = v_id_hospital;
+    DELETE FROM Departamento WHERE Id_departamento = v_id_departamento;
 
     COMMIT;
     SELECT 'Departamento eliminado correctamente' AS Mensaje;
@@ -251,6 +260,8 @@ CREATE PROCEDURE Eliminar_Hospital(
     IN nombre_hospital VARCHAR(50)
 )
 BEGIN
+    DECLARE v_id_hospital INT;
+    
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
@@ -259,16 +270,22 @@ BEGIN
 
     START TRANSACTION;
 
+    -- Obtener el ID del hospital
+    SELECT Id_hospital INTO v_id_hospital FROM Hospital WHERE Nombre = nombre_hospital;
+    
+    -- Eliminar departamentos asociados al hospital
+    DELETE FROM Departamento WHERE Id_hospital = v_id_hospital;
+    
     -- Eliminar el hospital
-    DELETE FROM Hospital WHERE Nombre = nombre_hospital;
+    DELETE FROM Hospital WHERE Id_hospital = v_id_hospital;
 
     COMMIT;
     SELECT 'Hospital eliminado correctamente' AS Mensaje;
 END$$
 
-
+-- Función para obtener el máximo ID de diagnóstico
 CREATE FUNCTION Obtener_Max_Id_Diagnostico() RETURNS INT  
-READS SQL DATA  -- 📌 Indica que la función solo lee datos  
+READS SQL DATA  
 BEGIN  
     DECLARE max_id_diagnostico INT;  
 
@@ -278,135 +295,134 @@ BEGIN
     RETURN max_id_diagnostico;  
 END$$  
 
-CREATE FUNCTION Verificar_Credenciales_Paciente(email_in VARCHAR(50), pin_in INT) RETURNS INT  
-READS SQL DATA  
-BEGIN  
-    DECLARE paciente_id INT;  
+DELIMITER ;
 
-    -- Verificar credenciales (manejar nulos)  
-    SELECT Id_paciente INTO paciente_id FROM Paciente WHERE Email = email_in AND PIN = pin_in;  
-
-    RETURN IFNULL(paciente_id, 0);  
-END$$  
-
-
+DELIMITER //
 CREATE PROCEDURE Crear_Citas()
 BEGIN
-    -- Declaración de variables al inicio
     DECLARE v_fecha DATE;
     DECLARE v_hora DATETIME;
     DECLARE v_estado VARCHAR(50) DEFAULT 'Paciente sin asignar';
     DECLARE v_citas_existen INT;
     
-    -- Variables para cursores
     DECLARE done INT DEFAULT FALSE;
     DECLARE hospital_id INT;
-    DECLARE dept_done INT DEFAULT FALSE;
     DECLARE dept_id INT;
-    DECLARE medico_done INT DEFAULT FALSE;
     DECLARE medico_id INT;
 
-    -- Declarar cursores
-    DECLARE cur_hospital CURSOR FOR SELECT Id_hospital FROM Tabla_Hospital;
-    DECLARE cur_dept CURSOR FOR SELECT Id_departamento FROM Tabla_Departamento WHERE Id_hospital = hospital_id;
-    DECLARE cur_medico CURSOR FOR SELECT Id_medico FROM Tabla_Medico WHERE Id_departamento = dept_id;
+    -- Cursores con nombres de tablas corregidos
+    DECLARE cur_hospital CURSOR FOR SELECT Id_hospital FROM Hospital;
+    DECLARE cur_dept CURSOR FOR SELECT Id_departamento FROM Departamento WHERE Id_hospital = hospital_id;
+    DECLARE cur_medico CURSOR FOR SELECT Id_medico FROM Medico WHERE Id_departamento = dept_id;
 
-    -- Unificar manejo de excepciones para todos los cursores
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE, dept_done = TRUE, medico_done = TRUE;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
-    -- Obtener la fecha actual
     SET v_fecha = CURDATE();
 
-    -- Verificar si ya existen citas para la fecha actual
-    SELECT COUNT(*) INTO v_citas_existen FROM Tabla_Cita WHERE Fecha = v_fecha;
+    -- Verificar citas existentes con nombre de tabla corregido
+    SELECT COUNT(*) INTO v_citas_existen FROM Cita WHERE Fecha = v_fecha;
     IF v_citas_existen > 0 THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Ya existen citas para la fecha actual.';
     END IF;
 
-    -- Abrir el cursor de hospitales
     OPEN cur_hospital;
-    read_hospital: LOOP
+    hospital_loop: LOOP
         FETCH cur_hospital INTO hospital_id;
-        IF done THEN LEAVE read_hospital; END IF;
+        IF done THEN LEAVE hospital_loop; END IF;
 
-        -- Abrir el cursor de departamentos
         OPEN cur_dept;
-        read_dept: LOOP
+        dept_loop: LOOP
             FETCH cur_dept INTO dept_id;
-            IF dept_done THEN LEAVE read_dept; END IF;
+            IF done THEN LEAVE dept_loop; END IF;
 
-            -- Abrir el cursor de médicos
             OPEN cur_medico;
-            read_medico: LOOP
+            medico_loop: LOOP
                 FETCH cur_medico INTO medico_id;
-                IF medico_done THEN LEAVE read_medico; END IF;
+                IF done THEN LEAVE medico_loop; END IF;
 
-                -- Iniciar la hora de las citas
                 SET v_hora = CONCAT(v_fecha, ' 08:00:00');
 
-                -- Crear citas hasta las 14:00
                 WHILE HOUR(v_hora) < 14 DO
-                    INSERT INTO Tabla_Cita (Id_medico, Id_paciente, Id_diagnostico, Fecha, Hora, Estado)
-                    VALUES (medico_id, NULL, NULL, v_fecha, v_hora, v_estado);
+                    INSERT INTO Cita (  -- Nombre de tabla corregido
+                        Id_medico, 
+                        Fecha, 
+                        Hora, 
+                        Estado
+                    ) VALUES (
+                        medico_id, 
+                        v_fecha, 
+                        v_hora, 
+                        v_estado
+                    );
 
-                    -- Incrementar la hora en 1 hora
-                    SET v_hora = v_hora + INTERVAL 1 HOUR;
+                    SET v_hora = ADDTIME(v_hora, '01:00:00');
                 END WHILE;
 
             END LOOP;
             CLOSE cur_medico;
+            SET done = FALSE;  -- Reset para próximo cursor
         END LOOP;
         CLOSE cur_dept;
+        SET done = FALSE;  -- Reset para próximo cursor
     END LOOP;
     CLOSE cur_hospital;
+END //
+DELIMITER ;
 
-    COMMIT;
-END$$
 
-
-CREATE PROCEDURE Asignar_Cita(IN id_paciente_param INT, IN id_cita_param INT)
+DELIMITER //
+CREATE PROCEDURE Asignar_Cita(
+    IN id_paciente_param INT, 
+    IN id_cita_param INT
+)
 BEGIN
-    -- Actualizar el ID del paciente y el estado de la cita
-    UPDATE Tabla_Cita
-    SET Id_paciente = id_paciente_param,
+    UPDATE Cita SET  -- Nombre de tabla corregido
+        Id_paciente = id_paciente_param,
         Estado = 'Paciente Asignado'
     WHERE Id_cita = id_cita_param;
 
-    -- Verificar si se realizó la actualización
     IF ROW_COUNT() = 0 THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'La cita especificada no existe o ya ha sido asignada.';
     END IF;
-END$$
-CREATE FUNCTION Verificar_Credenciales_Paciente(email_in VARCHAR(50), pin_in VARCHAR(50)) 
-RETURNS INT
-READS SQL DATA
-BEGIN
-    DECLARE paciente_id INT;
+END //
+DELIMITER ;
 
-    -- Buscar paciente por email y PIN
-    SELECT Id_paciente INTO paciente_id
-    FROM Tabla_Paciente
-    WHERE Email = email_in AND PIN = pin_in;
-
-    RETURN COALESCE(paciente_id, 0);
-END$$
-CREATE FUNCTION Verificar_Credenciales_Medico(email_in VARCHAR(50), pin_in VARCHAR(50)) 
-RETURNS INT
+DELIMITER //
+CREATE FUNCTION Verificar_Credenciales_Medico(
+    email_in VARCHAR(50), 
+    pin_in INT  -- Cambiado a INT para coincidir con el tipo de la tabla
+) RETURNS INT
 READS SQL DATA
 BEGIN
     DECLARE id_medico INT;
 
-    -- Buscar médico por email y PIN
     SELECT Id_Medico INTO id_medico
-    FROM Tabla_Medico
+    FROM Medico  -- Nombre de tabla corregido
     WHERE Email = email_in AND PIN = pin_in;
 
     RETURN COALESCE(id_medico, 0);
-END$$
-
+END //
 DELIMITER ;
+
+DELIMITER //
+CREATE FUNCTION Verificar_Credenciales_Paciente(
+    email_in VARCHAR(50), 
+    pin_in INT  -- Cambiado a INT para coincidir con el tipo de la tabla
+) RETURNS INT
+READS SQL DATA
+BEGIN
+    DECLARE paciente_id INT;
+
+    SELECT Id_paciente INTO paciente_id
+    FROM Paciente  -- Nombre de tabla corregido
+    WHERE Email = email_in AND PIN = pin_in;
+
+    RETURN COALESCE(paciente_id, 0);
+END //
+DELIMITER ;
+
 
 -- -------------------------------
 -- OBTENER DEPARTAMENTOS HOSPITALES
@@ -420,14 +436,14 @@ BEGIN
         d.Ubicacion AS Ubicacion_departamento,
         h.Id_hospital,
         h.Nombre AS Nombre_hospital,
-        h.Ciudad AS Ciudad_hospital,
-        h.Calle AS Calle_hospital
+        dir.Ciudad AS Ciudad_hospital,  -- Desde Direccion
+        dir.Calle AS Calle_hospital     -- Desde Direccion
     FROM 
-        Tabla_Departamento d
-        JOIN Tabla_Hospital h ON d.Id_hospital = h.Id_hospital;
+        Departamento d
+        JOIN Hospital h ON d.Id_hospital = h.Id_hospital
+        JOIN Direccion dir ON h.Id_direccion = dir.Id_direccion;  -- JOIN añadido
 END //
 DELIMITER ;
-
 
 -- -------------------------------
 -- OBTENER HOSPITALES
@@ -438,10 +454,11 @@ BEGIN
     SELECT 
         h.Id_hospital,
         h.Nombre AS Nombre_hospital,
-        h.Ciudad AS Ciudad_hospital,
-        h.Calle AS Calle_hospital
+        dir.Ciudad AS Ciudad_hospital,  -- Desde Direccion
+        dir.Calle AS Calle_hospital      -- Desde Direccion
     FROM 
-        Tabla_Hospital h;
+        Hospital h
+        JOIN Direccion dir ON h.Id_direccion = dir.Id_direccion;  -- JOIN añadido
 END //
 DELIMITER ;
 
@@ -457,8 +474,8 @@ BEGIN
         m.Apellidos,
         m.Telefono,
         m.Fecha_nacimiento,
-        m.Ciudad,
-        m.Calle,
+        dir.Ciudad,  -- Desde Direccion
+        dir.Calle,   -- Desde Direccion
         m.Email,
         m.PIN,
         d.Id_departamento,
@@ -466,9 +483,10 @@ BEGIN
         h.Id_hospital,
         h.Nombre AS Nombre_hospital
     FROM 
-        Tabla_Medico m
-        JOIN Tabla_Departamento d ON m.Id_departamento = d.Id_departamento
-        JOIN Tabla_Hospital h ON d.Id_hospital = h.Id_hospital;
+        Medico m
+        JOIN Direccion dir ON m.Id_direccion = dir.Id_direccion  -- JOIN añadido
+        JOIN Departamento d ON m.Id_departamento = d.Id_departamento
+        JOIN Hospital h ON d.Id_hospital = h.Id_hospital;
 END //
 DELIMITER ;
 
@@ -484,12 +502,13 @@ BEGIN
         p.Apellidos,
         p.Telefono,
         p.Fecha_nacimiento,
-        p.Ciudad,
-        p.Calle,
+        dir.Ciudad,  -- Desde Direccion
+        dir.Calle,   -- Desde Direccion
         p.Email,
         p.PIN
     FROM 
-        Tabla_Paciente p;
+        Paciente p
+        JOIN Direccion dir ON p.Id_direccion = dir.Id_direccion;  -- JOIN añadido
 END //
 DELIMITER ;
 
@@ -500,23 +519,24 @@ DELIMITER //
 CREATE PROCEDURE Obtener_Citas_Pendientes_Cursor(
     IN p_hospital VARCHAR(255),
     IN p_departamento VARCHAR(255),
-    IN p_fecha VARCHAR(10)
-)BEGIN
+    IN p_fecha DATE  -- Cambiado a tipo DATE
+)
+BEGIN
     SELECT 
         c.Id_Cita, 
         c.Fecha, 
-        TIME_FORMAT(c.Hora, '%H:%i:%s') AS Hora_Cita, 
+        DATE_FORMAT(c.Hora, '%H:%i:%s') AS Hora_Cita,  -- Formato para TIMESTAMP
         c.Id_Medico, 
         m.Nombre AS Nombre_Medico
     FROM 
-        Tabla_Cita c
-        JOIN Tabla_Medico m ON c.Id_medico = m.Id_medico
-        JOIN Tabla_Departamento d ON m.Id_departamento = d.Id_departamento
-        JOIN Tabla_Hospital h ON d.Id_hospital = h.Id_hospital
+        Cita c
+        JOIN Medico m ON c.Id_medico = m.Id_medico
+        JOIN Departamento d ON m.Id_departamento = d.Id_departamento
+        JOIN Hospital h ON d.Id_hospital = h.Id_hospital
     WHERE 
         h.Nombre = p_hospital 
         AND d.Nombre = p_departamento 
         AND c.Estado = 'Paciente sin asignar'
-        AND c.Fecha = STR_TO_DATE(p_fecha, '%d/%m/%Y');
+        AND c.Fecha = p_fecha;  -- Usamos fecha directamente
 END //
 DELIMITER ;
