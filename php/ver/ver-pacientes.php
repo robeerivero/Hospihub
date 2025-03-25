@@ -2,11 +2,8 @@
 include('../conexion.php');
 $conexion = conexion();
 
-// Consulta SQL para obtener los pacientes junto con la ciudad y calle de la tabla direccion
-$sql = "SELECT p.id_paciente, p.nombre, p.apellidos, p.telefono, p.fecha_nacimiento, d.ciudad, d.calle, p.email, p.pin 
-        FROM paciente p
-        JOIN direccion d ON p.id_direccion = d.id_direccion";
-
+// Llamar al procedimiento almacenado para obtener los pacientes
+$sql = "CALL Obtener_Pacientes_Cursor()";
 $result = mysqli_query($conexion, $sql);
 
 ?>
@@ -48,15 +45,15 @@ $result = mysqli_query($conexion, $sql);
         <tbody>
             <?php while ($row = mysqli_fetch_assoc($result)) { ?>
                 <tr>
-                    <td><?php echo htmlspecialchars($row['id_paciente']); ?></td>
-                    <td><?php echo htmlspecialchars($row['nombre']); ?></td>
-                    <td><?php echo htmlspecialchars($row['apellidos']); ?></td>
-                    <td><?php echo htmlspecialchars($row['telefono']); ?></td>
-                    <td><?php echo htmlspecialchars($row['fecha_nacimiento']); ?></td>
-                    <td><?php echo htmlspecialchars($row['ciudad']); ?></td>
-                    <td><?php echo htmlspecialchars($row['calle']); ?></td>
-                    <td><?php echo htmlspecialchars($row['email']); ?></td>
-                    <td><?php echo htmlspecialchars($row['pin']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Id_paciente']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Nombre']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Apellidos']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Telefono']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Fecha_nacimiento']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Ciudad']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Calle']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Email']); ?></td>
+                    <td><?php echo htmlspecialchars($row['PIN']); ?></td>
                 </tr>
             <?php } ?>
         </tbody>
