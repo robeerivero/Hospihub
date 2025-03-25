@@ -365,77 +365,6 @@ BEGIN
 END$$
 
 
-   DECLARE v_estado VARCHAR(50) DEFAULT 'Paciente sin asignar';
-    DECLARE v_citas_existen INT;
-    
-    -- Variables para cursores
-    DECLARE done INT DEFAULT FALSE;
-    DECLARE hospital_id INT;
-    DECLARE dept_done INT DEFAULT FALSE;
-    DECLARE dept_id INT;
-    DECLARE medico_done INT DEFAULT FALSE;
-    DECLARE medico_id INT;
-
-    -- Declarar cursores
-    DECLARE cur_hospital CURSOR FOR SELECT Id_hospital FROM Tabla_Hospital;
-    DECLARE cur_dept CURSOR FOR SELECT Id_departamento FROM Tabla_Departamento WHERE Id_hospital = hospital_id;
-    DECLARE cur_medico CURSOR FOR SELECT Id_medico FROM Tabla_Medico WHERE Id_departamento = dept_id;
-
-    -- Manejo de excepciones
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET dept_done = TRUE;
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET medico_done = TRUE;
-
-    -- Obtener la fecha actual
-    SET v_fecha = CURDATE();
-
-    -- Verificar si ya existen citas para la fecha actual
-    SELECT COUNT(*) INTO v_citas_existen FROM Tabla_Cita WHERE Fecha = v_fecha;
-    IF v_citas_existen > 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Ya existen citas para la fecha actual.';
-    END IF;
-
-    -- Abrir el cursor de hospitales
-    OPEN cur_hospital;
-    read_hospital: LOOP
-        FETCH cur_hospital INTO hospital_id;
-        IF done THEN LEAVE read_hospital; END IF;
-
-        -- Abrir el cursor de departamentos
-        OPEN cur_dept;
-        read_dept: LOOP
-            FETCH cur_dept INTO dept_id;
-            IF dept_done THEN LEAVE read_dept; END IF;
-
-            -- Abrir el cursor de médicos
-            OPEN cur_medico;
-            read_medico: LOOP
-                FETCH cur_medico INTO medico_id;
-                IF medico_done THEN LEAVE read_medico; END IF;
-
-                -- Iniciar la hora de las citas
-                SET v_hora = CONCAT(v_fecha, ' 08:00:00');
-
-                -- Crear citas hasta las 14:00
-                WHILE HOUR(v_hora) < 14 DO
-                    INSERT INTO Tabla_Cita (Id_medico, Id_paciente, Id_diagnostico, Fecha, Hora, Estado)
-                    VALUES (medico_id, NULL, NULL, v_fecha, v_hora, v_estado);
-
-                    -- Incrementar la hora en 1 hora
-                    SET v_hora = v_hora + INTERVAL 1 HOUR;
-                END WHILE;
-
-            END LOOP;
-            CLOSE cur_medico;
-        END LOOP;
-        CLOSE cur_dept;
-    END LOOP;
-    CLOSE cur_hospital;
-
-    COMMIT;
-END$$
-
 CREATE PROCEDURE Asignar_Cita(IN id_paciente_param INT, IN id_cita_param INT)
 BEGIN
     -- Actualizar el ID del paciente y el estado de la cita
@@ -477,4 +406,117 @@ BEGIN
     RETURN COALESCE(id_medico, 0);
 END$$
 
+DELIMITER ;
+
+-- -------------------------------
+-- OBTENER DEPARTAMENTOS HOSPITALES
+-- -------------------------------
+DELIMITER //
+CREATE PROCEDURE Obtener_Departamentos_Hospitales_Cursor()
+BEGIN
+    SELECT 
+        d.Id_departamento,
+        d.Nombre AS Nombre_departamento,
+        d.Ubicacion AS Ubicacion_departamento,
+        h.Id_hospital,
+        h.Nombre AS Nombre_hospital,
+        h.Ciudad AS Ciudad_hospital,
+        h.Calle AS Calle_hospital
+    FROM 
+        Tabla_Departamento d
+        JOIN Tabla_Hospital h ON d.Id_hospital = h.Id_hospital;
+END //
+DELIMITER ;
+
+
+-- -------------------------------
+-- OBTENER HOSPITALES
+-- -------------------------------
+DELIMITER //
+CREATE PROCEDURE Obtener_Hospitales_Cursor()
+BEGIN
+    SELECT 
+        h.Id_hospital,
+        h.Nombre AS Nombre_hospital,
+        h.Ciudad AS Ciudad_hospital,
+        h.Calle AS Calle_hospital
+    FROM 
+        Tabla_Hospital h;
+END //
+DELIMITER ;
+
+-- -------------------------------
+-- OBTENER MEDICOS
+-- -------------------------------
+DELIMITER //
+CREATE PROCEDURE Obtener_Medicos_Cursor()
+BEGIN
+    SELECT 
+        m.Id_medico,
+        m.Nombre,
+        m.Apellidos,
+        m.Telefono,
+        m.Fecha_nacimiento,
+        m.Ciudad,
+        m.Calle,
+        m.Email,
+        m.PIN,
+        d.Id_departamento,
+        d.Nombre AS Nombre_departamento,
+        h.Id_hospital,
+        h.Nombre AS Nombre_hospital
+    FROM 
+        Tabla_Medico m
+        JOIN Tabla_Departamento d ON m.Id_departamento = d.Id_departamento
+        JOIN Tabla_Hospital h ON d.Id_hospital = h.Id_hospital;
+END //
+DELIMITER ;
+
+-- -------------------------------
+-- OBTENER PACIENTES
+-- -------------------------------
+DELIMITER //
+CREATE PROCEDURE Obtener_Pacientes_Cursor()
+BEGIN
+    SELECT 
+        p.Id_paciente,
+        p.Nombre,
+        p.Apellidos,
+        p.Telefono,
+        p.Fecha_nacimiento,
+        p.Ciudad,
+        p.Calle,
+        p.Email,
+        p.PIN
+    FROM 
+        Tabla_Paciente p;
+END //
+DELIMITER ;
+
+-- -------------------------------
+-- OBTENER CITAS
+-- -------------------------------
+DELIMITER //
+CREATE PROCEDURE Obtener_Citas_Pendientes_Cursor(
+    IN p_hospital VARCHAR(255),
+    IN p_departamento VARCHAR(255),
+    IN p_fecha VARCHAR(10)
+)BEGIN
+    SELECT 
+        c.Id_Cita, 
+        c.Fecha, 
+        TIME_FORMAT(c.Hora, '%H:%i:%s') AS Hora_Cita, 
+        c.Id_Medico, 
+        m.Nombre AS Nombre_Medico
+    FROM 
+        Tabla_Cita c
+        JOIN Tabla_Medico m ON c.Id_medico = m.Id_medico
+        JOIN Tabla_Departamento d ON m.Id_departamento = d.Id_departamento
+        JOIN Tabla_Hospital h ON d.Id_hospital = h.Id_hospital
+    WHERE 
+        h.Nombre = p_hospital 
+        AND d.Nombre = p_departamento 
+        AND c.Estado = 'Paciente sin asignar'
+        AND c.Fecha = STR_TO_DATE(p_fecha, '%d/%m/%Y');
+END //
 DELIMITER ;
