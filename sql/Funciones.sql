@@ -222,38 +222,41 @@ BEGIN
 END$$
 
 -- Procedimiento para eliminar un departamento
+DELIMITER //
+
 CREATE PROCEDURE Eliminar_Departamento(
-    IN nombre_departamento VARCHAR(50),
-    IN nombre_hospital VARCHAR(50)
+    IN p_id_departamento INT
 )
 BEGIN
-    DECLARE v_id_hospital INT;
-    DECLARE v_id_departamento INT;
+    DECLARE v_tiene_medicos INT DEFAULT 0;
     
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error al eliminar el departamento';
+        SELECT 'Error al eliminar el departamento' AS resultado;
     END;
 
     START TRANSACTION;
 
-    -- Obtener el ID del hospital
-    SELECT Id_hospital INTO v_id_hospital FROM Hospital WHERE Nombre = nombre_hospital;
+    -- Verificar si el departamento tiene médicos asignados
+    SELECT COUNT(*) INTO v_tiene_medicos
+    FROM Medico
+    WHERE Id_departamento = p_id_departamento;
     
-    -- Obtener el ID del departamento
-    SELECT Id_departamento INTO v_id_departamento FROM Departamento 
-    WHERE Nombre = nombre_departamento AND Id_hospital = v_id_hospital;
-    
-    -- Eliminar médicos asociados al departamento
-    DELETE FROM Medico WHERE Id_departamento = v_id_departamento;
-    
-    -- Eliminar el departamento
-    DELETE FROM Departamento WHERE Id_departamento = v_id_departamento;
+    IF v_tiene_medicos > 0 THEN
+        SELECT 'No se puede eliminar el departamento porque tiene médicos asignados' AS resultado;
+    ELSE
+        -- Eliminar el departamento
+        DELETE FROM Departamento 
+        WHERE Id_departamento = p_id_departamento;
+        
+        SELECT 'Departamento eliminado correctamente' AS resultado;
+    END IF;
 
     COMMIT;
-    SELECT 'Departamento eliminado correctamente' AS Mensaje;
-END$$
+END //
+
+DELIMITER ;
 
 -- Procedimiento para eliminar un hospital
 CREATE PROCEDURE Eliminar_Hospital(
@@ -539,4 +542,87 @@ BEGIN
         AND c.Estado = 'Paciente sin asignar'
         AND c.Fecha = p_fecha;  -- Usamos fecha directamente
 END //
+DELIMITER ;
+
+-- -------------------------------
+-- OBTENER CITAS
+-- -------------------------------
+DELIMITER //
+CREATE PROCEDURE Obtener_Citas_Paciente(IN paciente_id INT)
+BEGIN
+    SELECT 
+        c.Id_Cita,
+        c.Fecha,
+        TIME_FORMAT(c.Hora, '%H:%i:%s') AS Hora,
+        m.Nombre AS Nombre_Medico,
+        m.Apellidos AS Apellidos_Medico,
+        d.Nombre AS Nombre_Departamento,
+        h.Nombre AS Nombre_Hospital,
+        c.Estado
+    FROM 
+        Cita c
+        JOIN Medico m ON c.Id_medico = m.Id_medico
+        JOIN Departamento d ON m.Id_departamento = d.Id_departamento
+        JOIN Hospital h ON d.Id_hospital = h.Id_hospital
+    WHERE 
+        c.Id_paciente = paciente_id
+    ORDER BY 
+        c.Fecha DESC, c.Hora DESC;
+END //
+DELIMITER ;
+
+DELIMITER //
+
+-- -------------------------------
+-- Verificar si una cita pertenece a un paciente
+-- -------------------------------
+
+CREATE FUNCTION Verificar_Cita_Paciente(
+    cita_id INT,
+    paciente_id INT
+) RETURNS BOOLEAN
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+    DECLARE existe BOOLEAN;
+    
+    SELECT COUNT(*) > 0 INTO existe
+    FROM Cita
+    WHERE Id_Cita = cita_id AND Id_paciente = paciente_id;
+    
+    RETURN existe;
+END //
+
+-- -------------------------------
+-- Cancelar una cita
+-- -------------------------------
+
+CREATE PROCEDURE Cancelar_Cita(
+    IN cita_id INT,
+    IN paciente_id INT,
+    OUT resultado VARCHAR(100)
+)
+BEGIN
+    DECLARE cita_valida BOOLEAN;
+    
+    -- Verificar si la cita pertenece al paciente
+    SET cita_valida = Verificar_Cita_Paciente(cita_id, paciente_id);
+    
+    IF NOT cita_valida THEN
+        SET resultado = 'La cita no existe o no pertenece a este paciente';
+    ELSE
+        -- Actualizar el estado de la cita
+        UPDATE Cita 
+        SET Id_paciente = NULL, 
+            Estado = 'Paciente sin asignar' 
+        WHERE Id_Cita = cita_id;
+        
+        IF ROW_COUNT() > 0 THEN
+            SET resultado = 'Cita cancelada correctamente';
+        ELSE
+            SET resultado = 'Error al cancelar la cita';
+        END IF;
+    END IF;
+END //
+
 DELIMITER ;

@@ -9,7 +9,6 @@ if (!isset($_SESSION['id_paciente'])) {
 }
 
 $paciente_id = $_SESSION['id_paciente'];
-
 ?>
 <!DOCTYPE html>
 <html>
@@ -17,8 +16,8 @@ $paciente_id = $_SESSION['id_paciente'];
     <title>HospiHub - Tus Citas</title>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
-    <meta name="author" content="Jesús Javier Gallego Ibañez, Roberto Rivero Díaz, David Conde Salado">
-    <meta name="designer" content="Jesús Javier Gallego Ibañez, Roberto Rivero Díaz, David Conde Salado">
+    <meta name="author" content="Carlos Antonio Cortés Lora, Roberto Rivero Díaz">
+    <meta name="designer" content="Carlos Antonio Cortés Lora, Roberto Rivero Díaz">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
@@ -37,61 +36,63 @@ $paciente_id = $_SESSION['id_paciente'];
     <?php
     // Conectar a la base de datos MySQL
     include('../conexion.php');
-    $conexion = conexion(); // Llamar a la función de conexión de conexion.php
+    $conexion = conexion();
 
-    // Consulta SQL en MySQLi
-    $sql = "SELECT 
-                c.Id_Cita, 
-                c.Fecha, 
-                TIME_FORMAT(c.Hora, '%H:%i:%s') AS Hora_Cita, 
-                c.Id_Medico, 
-                c.Estado
-            FROM 
-                Tabla_Cita c
-            JOIN Tabla_Paciente p ON c.Id_paciente = p.Id_paciente
-            JOIN Tabla_Medico m ON c.Id_medico = m.Id_medico
-            WHERE
-                c.Id_Paciente = ?";
-
+    // Llamar al procedimiento almacenado para obtener citas del paciente
+    $sql = "CALL Obtener_Citas_Paciente(?)";
+    
     // Preparar la consulta
     $stmt = mysqli_prepare($conexion, $sql);
-    mysqli_stmt_bind_param($stmt, "i", $paciente_id); // Enlazar parámetros
+    mysqli_stmt_bind_param($stmt, "i", $paciente_id);
     mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt); // Obtener resultados
+    $result = mysqli_stmt_get_result($stmt);
 
-    // Crear tabla para mostrar citas
-    echo "<table class='table table-striped'>\n";
-    echo "<thead>";
-    echo "<tr>";
-    echo "<th>ID de la Cita</th>";
-    echo "<th>Fecha de la Cita</th>";
-    echo "<th>Hora de la Cita</th>";
-    echo "<th>ID del Médico</th>";
-    echo "<th>Estado de la Cita</th>";
-    echo "<th>Acciones</th>"; // Columna para botones de acciones
-    echo "</tr>";
-    echo "</thead>";
+    if (mysqli_num_rows($result) > 0) {
+        // Crear tabla para mostrar citas
+        echo "<table class='table table-striped'>\n";
+        echo "<thead>";
+        echo "<tr>";
+        echo "<th>ID de la Cita</th>";
+        echo "<th>Fecha</th>";
+        echo "<th>Hora</th>";
+        echo "<th>Médico</th>";
+        echo "<th>Departamento</th>";
+        echo "<th>Hospital</th>";
+        echo "<th>Estado</th>";
+        echo "<th>Acciones</th>";
+        echo "</tr>";
+        echo "</thead>";
+        echo "<tbody>";
 
-    // Recorrer resultados
-    while ($row = mysqli_fetch_assoc($result)) {
-        echo "<tr>\n";
-        foreach ($row as $item) {
-            echo "<td>" . htmlentities($item, ENT_QUOTES) . "</td>\n";
+        // Recorrer resultados
+        while ($row = mysqli_fetch_assoc($result)) {
+            echo "<tr>";
+            echo "<td>" . htmlspecialchars($row['Id_Cita']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['Fecha']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['Hora']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['Nombre_Medico'] . " " . $row['Apellidos_Medico']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['Nombre_Departamento']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['Nombre_Hospital']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['Estado']) . "</td>";
+            
+            // Acciones según el estado
+            echo "<td>";
+            if ($row['Estado'] === 'Diagnostico Completo') {
+                echo "<a href='ver-diagnostico.php?id_cita=" . $row['Id_Cita'] . "' class='btn-ver'>Ver diagnóstico</a>";
+            } elseif ($row['Estado'] === 'Paciente Asignado') {
+                echo "<a href='cancelar-cita.php?id_cita=" . $row['Id_Cita'] . "' class='btn-cancelar'>Cancelar</a>";
+            }
+            echo "</td>";
+            echo "</tr>";
         }
-
-        // Agregar botones de acciones según el estado de la cita
-        if ($row['Estado'] === 'Diagnostico Completo') {
-            echo "<td><a href='ver-detalles-cita.php?id_cita=" . $row['Id_Cita'] . "'>Ver detalles</a></td>";
-        } elseif ($row['Estado'] === 'Paciente Asignado') {
-            echo "<td><a href='cancelar-cita.php?id_cita=" . $row['Id_Cita'] . "' style='background-color: red;'>Cancelar Cita</a></td>";
-        } else {
-            echo "<td></td>";
-        }
-        echo "</tr>\n";
+        
+        echo "</tbody>";
+        echo "</table>";
+    } else {
+        echo "<p>No tienes citas programadas.</p>";
     }
-    echo "</table>\n";
 
-    // Cerrar conexión
+    // Cerrar la conexión
     mysqli_stmt_close($stmt);
     mysqli_close($conexion);
     ?>

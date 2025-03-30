@@ -1,6 +1,18 @@
 <?php
 // Iniciar la sesión para acceder al id_paciente
 session_start();
+
+// Verificar si el paciente está logueado
+if (!isset($_SESSION['id_paciente'])) {
+    header("Location: ../login/login-paciente.php");
+    exit();
+}
+
+// Verificar si se enviaron los datos del formulario
+if ($_SERVER["REQUEST_METHOD"] != "POST" || !isset($_POST['hospital']) || !isset($_POST['departamento']) || !isset($_POST['fecha'])) {
+    header("Location: elegir-citas.php");
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -8,8 +20,8 @@ session_start();
     <title>HospiHub - Citas Disponibles</title>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
-    <meta name="author" content="Jesús Javier Gallego Ibañez, Roberto Rivero Díaz, David Conde Salado">
-    <meta name="designer" content="Jesús Javier Gallego Ibañez, Roberto Rivero Díaz, David Conde Salado">
+    <meta name="author" content="Carlos Antonio Cortés Lora, Roberto Rivero Díaz">
+    <meta name="designer" content="Carlos Antonio Cortés Lora, Roberto Rivero Díaz">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
@@ -30,83 +42,81 @@ session_start();
         include('../conexion.php');
         $conexion = conexion();
 
+        // Obtener datos del formulario
         $hospital = $_POST['hospital'];
         $departamento = $_POST['departamento'];
-        $fecha_formulario = $_POST['fecha'];
+        $fecha = $_POST['fecha'];
+        $id_paciente = $_SESSION['id_paciente'];
 
-        // Convertir la fecha al formato adecuado para MySQL (YYYY-MM-DD)
-        $fecha = date('Y-m-d', strtotime($fecha_formulario));
+        // Mostrar información de búsqueda
+        echo "<div class='info-busqueda'>";
+        echo "<h2>Hospital: " . htmlspecialchars($hospital) . "</h2>";
+        echo "<h2>Departamento: " . htmlspecialchars($departamento) . "</h2>";
+        echo "<h2>Fecha: " . htmlspecialchars($fecha) . "</h2>";
+        echo "</div>";
 
-        echo "<h2>Hospital: " . htmlentities($hospital, ENT_QUOTES) . "</h2>";
-        echo "<h2>Departamento: " . htmlentities($departamento, ENT_QUOTES) . "</h2>";
-        echo "<h2>Fecha: " . htmlentities($fecha, ENT_QUOTES) . "</h2>";
-
-        // Consulta SQL para obtener citas disponibles
-        $sql = "SELECT 
-                    c.Id_Cita, 
-                    c.Fecha, 
-                    TIME_FORMAT(c.Hora, '%H:%i:%s') AS Hora_Cita, 
-                    c.Id_Medico, 
-                    CONCAT(m.Nombre, ' ', m.Apellido) AS Medico_Cita
-                FROM 
-                    Tabla_Cita c
-                JOIN Tabla_Medico m ON c.Id_medico = m.Id_medico
-                JOIN Tabla_Departamento d ON m.Id_departamento = d.Id_departamento
-                JOIN Tabla_Hospital h ON d.Id_hospital = h.Id_hospital
-                WHERE 
-                    h.Nombre = ? 
-                    AND d.Nombre = ? 
-                    AND c.Fecha = ? 
-                    AND c.Estado = 'Pendiente'";
-
-        // Preparar la consulta
+        // Llamar al procedimiento almacenado para obtener citas disponibles
+        $sql = "CALL Obtener_Citas_Pendientes_Cursor(?, ?, ?)";
         $stmt = mysqli_prepare($conexion, $sql);
-        mysqli_stmt_bind_param($stmt, "sss", $hospital, $departamento, $fecha); // Enlazar parámetros
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt); // Obtener resultados
+        
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "sss", $hospital, $departamento, $fecha);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
 
-        // Mostrar los resultados en una tabla
-        echo "<table class='table table-striped'>\n";
-        echo "<thead>";
-        echo "<tr>";
-        echo "<th>Id de la cita</th>";
-        echo "<th>Fecha de la cita</th>";
-        echo "<th>Hora de la cita</th>";
-        echo "<th>Id del Médico</th>";
-        echo "<th>Médico de la Cita</th>";
-        echo "<th>Seleccionar</th>";
-        echo "</tr>";
-        echo "</thead>";
+            if (mysqli_num_rows($result) > 0) {
+                // Mostrar los resultados en una tabla
+                echo "<table class='table table-striped'>";
+                echo "<thead>";
+                echo "<tr>";
+                echo "<th>ID Cita</th>";
+                echo "<th>Fecha</th>";
+                echo "<th>Hora</th>";
+                echo "<th>Médico</th>";
+                echo "<th>Acción</th>";
+                echo "</tr>";
+                echo "</thead>";
+                echo "<tbody>";
 
-        // Recorrer resultados
-        while ($row = mysqli_fetch_assoc($result)) {
-            echo "<tr>\n";
-            foreach ($row as $item) {
-                echo "<td>" . htmlentities($item, ENT_QUOTES) . "</td>\n";
+                while ($row = mysqli_fetch_assoc($result)) {
+                    echo "<tr>";
+                    echo "<td>" . htmlspecialchars($row['Id_Cita']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['Fecha']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['Hora_Cita']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['Nombre_Medico']) . "</td>";
+                    echo "<td>";
+                    echo "<form action='actualizar-seleccion.php' method='post'>";
+                    echo "<input type='hidden' name='cita_id' value='" . $row['Id_Cita'] . "'>";
+                    echo "<input type='hidden' name='id_paciente' value='" . $id_paciente . "'>";
+                    echo "<button type='submit' class='btn-seleccionar'>Seleccionar</button>";
+                    echo "</form>";
+                    echo "</td>";
+                    echo "</tr>";
+                }
+
+                echo "</tbody>";
+                echo "</table>";
+            } else {
+                echo "<p class='no-resultados'>No hay citas disponibles para los criterios seleccionados.</p>";
             }
-            // Agregar el formulario y el botón "Seleccionar" en cada fila
-            echo "<td>";
-            echo "<form action='actualizar-seleccion.php' method='post'>";
-            echo "<input type='hidden' name='cita_id' value='" . $row['Id_Cita'] . "'>";
-            echo "<button type='submit'>Seleccionar</button>";
-            echo "</form>";
-            echo "</td>";
-            echo "</tr>\n";
+
+            // Liberar resultado
+            mysqli_free_result($result);
+            mysqli_stmt_close($stmt);
+        } else {
+            echo "<p class='error'>Error al preparar la consulta: " . htmlspecialchars(mysqli_error($conexion)) . "</p>";
         }
-        echo "</table>\n";
 
         // Cerrar conexión
-        mysqli_stmt_close($stmt);
         mysqli_close($conexion);
         ?>
 
     </div>
 
-    <br><br><br>
-    <a href="elegir-citas.php">Volver atrás <span class="material-symbols-outlined">arrow_left_alt</span></a>
-
-    <br>
-    <a href="../menu-paciente.php">Regresar al menú del paciente <span class="material-symbols-outlined">arrow_left_alt</span></a>
+    <div class="footer-links">
+        <a href="elegir-citas.php" class="btn-volver">Volver atrás <span class="material-symbols-outlined">arrow_left_alt</span></a>
+        <a href="../menu-paciente.php" class="btn-menu">Regresar al menú del paciente <span class="material-symbols-outlined">arrow_left_alt</span></a>
+    </div>
 
 </body>
 </html>

@@ -31,9 +31,9 @@
         $id_cita = $_POST['cita_id'];
         $id_paciente = $_SESSION['id_paciente'];
         
-        // Conectar a la base de datos
+        // Conectar a la base de datos usando la función de conexión
         include('../conexion.php');
-        $conexion = new mysqli($host, $user, $password, $dbname);
+        $conexion = conexion();
         
         // Verificar la conexión
         if ($conexion->connect_error) {
@@ -41,8 +41,12 @@
         }
 
         // Preparar la consulta SQL para actualizar la cita con el ID del paciente y cambiar su estado
-        $sql = "CALL Otros.Asignar_Cita(?, ?)";
+        $sql = "CALL Asignar_Cita(?, ?)";
         $stmt = $conexion->prepare($sql);
+
+        if ($stmt === false) {
+            die("Error al preparar la consulta: " . $conexion->error);
+        }
 
         // Vincular los parámetros
         $stmt->bind_param("ii", $id_paciente, $id_cita);
@@ -54,7 +58,7 @@
         if ($resultado) {
             echo "<br><br><br><br><br><hr style='border-top: 3px solid #52ee57; border-bottom: 3px solid #52ee57;'><p style='color:#52ee57; text-align:center; font-size: 1.5em;' >Su cita ha sido reservada correctamente.</p><hr style='border-top: 3px solid #52ee57; border-bottom: 3px solid #52ee57;'>";
         } else {
-            echo "Error al asignar la cita.";
+            echo "<br><br><br><br><br><hr style='border-top: 3px solid red; border-bottom: 3px solid red;'><p style='color:red; text-align:center; font-size: 1.5em;'>Error al asignar la cita: " . $conexion->error . "</p><hr style='border-top: 3px solid red; border-bottom: 3px solid red;'>";
         }
 
         // Liberar recursos
