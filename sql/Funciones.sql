@@ -258,6 +258,8 @@ END //
 
 DELIMITER ;
 
+DELIMITER $$
+
 -- Procedimiento para eliminar un hospital
 CREATE PROCEDURE Eliminar_Hospital(
     IN nombre_hospital VARCHAR(50)
