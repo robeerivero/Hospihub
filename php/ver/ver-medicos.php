@@ -3,11 +3,7 @@ include('../conexion.php');
 $conexion = conexion();
 
 // Consulta SQL actualizada para obtener los médicos con dirección, departamento y hospital
-$sql = "SELECT m.id_medico, m.nombre AS nombre_medico, m.apellidos, m.telefono, m.fecha_nacimiento, dir.ciudad, dir.calle, m.email, m.pin, d.nombre AS nombre_departamento, d.id_departamento, h.nombre AS nombre_hospital 
-        FROM medico m
-        LEFT JOIN direccion dir ON m.id_direccion = dir.id_direccion
-        LEFT JOIN departamento d ON m.id_departamento = d.id_departamento
-        LEFT JOIN hospital h ON d.id_hospital = h.id_hospital";
+$sql = "CALL Obtener_Medicos_Cursor()";
 
 $result = mysqli_query($conexion, $sql);
 
@@ -53,19 +49,19 @@ $result = mysqli_query($conexion, $sql);
         </thead>
         <tbody>
             <?php while ($row = mysqli_fetch_assoc($result)) { ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($row['id_medico']); ?></td>
-                    <td><?php echo htmlspecialchars($row['nombre_medico']); ?></td>
-                    <td><?php echo htmlspecialchars($row['apellidos']); ?></td>
-                    <td><?php echo htmlspecialchars($row['telefono']); ?></td>
-                    <td><?php echo htmlspecialchars($row['fecha_nacimiento']); ?></td>
-                    <td><?php echo htmlspecialchars($row['ciudad']); ?></td>
-                    <td><?php echo htmlspecialchars($row['calle']); ?></td>
-                    <td><?php echo htmlspecialchars($row['email']); ?></td>
-                    <td><?php echo htmlspecialchars($row['pin']); ?></td>
-                    <td><?php echo htmlspecialchars($row['nombre_departamento']); ?></td>
-                    <td><?php echo htmlspecialchars($row['id_departamento']); ?></td>
-                    <td><?php echo htmlspecialchars($row['nombre_hospital']); ?></td>
+                <tr align="center">
+                    <td><?php echo htmlspecialchars($row['Id_medico']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Nombre']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Apellidos']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Telefono']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Fecha_nacimiento']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Ciudad']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Calle']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Email']); ?></td>
+                    <td><?php echo htmlspecialchars($row['PIN']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Nombre_departamento']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Id_departamento']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Nombre_hospital']); ?></td>
                 </tr>
             <?php } ?>
         </tbody>

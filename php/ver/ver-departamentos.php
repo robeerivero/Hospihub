@@ -3,12 +3,7 @@ include('../conexion.php');
 $conexion = conexion();
 
 // Consulta SQL corregida para obtener los departamentos con la dirección del hospital
-$sql = "SELECT d.id_departamento, d.nombre AS nombre_departamento, d.ubicacion, 
-               h.id_hospital, h.nombre AS nombre_hospital, 
-               dir.ciudad AS ciudad_hospital, dir.calle AS calle_hospital
-        FROM departamento d
-        JOIN hospital h ON d.id_hospital = h.id_hospital
-        JOIN direccion dir ON h.id_direccion = dir.id_direccion";
+$sql = "CALL Obtener_Departamentos_Hospitales_Cursor()";
 
 $result = mysqli_query($conexion, $sql);
 
@@ -48,14 +43,14 @@ $result = mysqli_query($conexion, $sql);
         </thead>
         <tbody>
             <?php while ($row = mysqli_fetch_assoc($result)) { ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($row['id_departamento']); ?></td>
-                    <td><?php echo htmlspecialchars($row['nombre_departamento']); ?></td>
-                    <td><?php echo htmlspecialchars($row['ubicacion']); ?></td>
-                    <td><?php echo htmlspecialchars($row['id_hospital']); ?></td>
-                    <td><?php echo htmlspecialchars($row['nombre_hospital']); ?></td>
-                    <td><?php echo htmlspecialchars($row['ciudad_hospital']); ?></td>
-                    <td><?php echo htmlspecialchars($row['calle_hospital']); ?></td>
+                <tr align="center">
+                    <td><?php echo htmlspecialchars($row['Id_departamento']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Nombre_departamento']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Ubicacion_departamento']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Id_hospital']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Nombre_hospital']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Ciudad_hospital']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Calle_hospital']); ?></td>
                 </tr>
             <?php } ?>
         </tbody>

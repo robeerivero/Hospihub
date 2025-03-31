@@ -3,7 +3,7 @@ function conexion() {
     // Configuración de la conexión
     $servidor = '127.0.0.1'; // Servidor de la base de datos (localhost)
     $usuario = 'root'; // Usuario de la base de datos
-    $contrasenna = 'password'; // Contraseña del usuario (vacía si no tiene contraseña)
+    $contrasenna = ''; // Contraseña del usuario (vacía si no tiene contraseña)
     $baseDeDatos = 'hospihub'; // Nombre de la base de datos que has creado
 
     // Crear la conexión

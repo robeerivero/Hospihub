@@ -3,9 +3,7 @@ include('../conexion.php');
 $conexion = conexion();
 
 // Consulta SQL para obtener los hospitales
-$sql = "SELECT h.id_hospital, h.nombre, dir.ciudad, dir.calle
- FROM hospital h
- JOIN direccion dir ON h.id_direccion = dir.id_direccion";
+$sql = "CALL Obtener_Hospitales_Cursor()";
 
 $result = mysqli_query($conexion, $sql);
 
@@ -36,18 +34,18 @@ $result = mysqli_query($conexion, $sql);
         <thead>
             <tr>
                 <th>Id del Hospital</th>
-                <th>Nombre del Hospital</th>
-                <th>Ciudad del Hospital</th>
-                <th>Calle del Hospital</th>
+                <th>Nombre</th>
+                <th>Ciudad</th>
+                <th>Calle</th>
             </tr>
         </thead>
         <tbody>
             <?php while ($row = mysqli_fetch_assoc($result)) { ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($row['id_hospital']); ?></td>
-                    <td><?php echo htmlspecialchars($row['nombre']); ?></td>
-                    <td><?php echo htmlspecialchars($row['ciudad']); ?></td>
-                    <td><?php echo htmlspecialchars($row['calle']); ?></td>
+                <tr align="center">
+                    <td ><?php echo htmlspecialchars($row['Id_hospital']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Nombre_hospital']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Ciudad_hospital']); ?></td>
+                    <td><?php echo htmlspecialchars($row['Calle_hospital']); ?></td>
                 </tr>
             <?php } ?>
         </tbody>

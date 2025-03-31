@@ -44,7 +44,7 @@ $result = mysqli_query($conexion, $sql);
         </thead>
         <tbody>
             <?php while ($row = mysqli_fetch_assoc($result)) { ?>
-                <tr>
+                <tr align="center">
                     <td><?php echo htmlspecialchars($row['Id_paciente']); ?></td>
                     <td><?php echo htmlspecialchars($row['Nombre']); ?></td>
                     <td><?php echo htmlspecialchars($row['Apellidos']); ?></td>
