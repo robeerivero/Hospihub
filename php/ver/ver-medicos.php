@@ -3,7 +3,7 @@ include('../conexion.php');
 $conexion = conexion();
 
 // Consulta SQL actualizada para obtener los médicos con dirección, departamento y hospital
-$sql = "CALL Obtener_Medicos_Cursor()";
+$sql = "CALL Obtener_Medicos_Cursor(NULL)";
 
 $result = mysqli_query($conexion, $sql);
 

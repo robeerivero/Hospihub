@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 01, 2025 at 09:49 AM
+-- Generation Time: Apr 01, 2025 at 01:48 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -128,6 +128,60 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `Crear_Citas` ()   BEGIN
         SET done = FALSE;  -- Reset para próximo cursor
     END LOOP;
     CLOSE cur_hospital;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Editar_Medico` (IN `id_medico_param` INT, IN `nombre_param` VARCHAR(255), IN `apellidos_param` VARCHAR(255), IN `telefono_param` VARCHAR(20), IN `fecha_nacimiento_param` DATE, IN `ciudad_param` VARCHAR(255), IN `calle_param` VARCHAR(255), IN `email_param` VARCHAR(255), IN `pin_param` INT, IN `departamento_param` VARCHAR(255), IN `hospital_param` VARCHAR(255))   BEGIN
+    DECLARE id_direccion_existente INT;
+    DECLARE id_departamento_existente INT;
+    DECLARE id_hospital_existente INT;
+
+    -- Verificar si la dirección ya existe
+    SELECT Id_direccion INTO id_direccion_existente
+    FROM Direccion
+    WHERE Ciudad = ciudad_param AND Calle = calle_param
+    LIMIT 1;
+
+    -- Si no existe, insertamos una nueva dirección
+    IF id_direccion_existente IS NULL THEN
+        INSERT INTO Direccion (Ciudad, Calle)
+        VALUES (ciudad_param, calle_param);
+        
+        -- Obtener el ID de la nueva dirección
+        SET id_direccion_existente = LAST_INSERT_ID();
+    END IF;
+
+    -- Verificar si el hospital existe
+    SELECT Id_hospital INTO id_hospital_existente
+    FROM Hospital
+    WHERE Nombre = hospital_param
+    LIMIT 1;
+
+    IF id_hospital_existente IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El hospital no existe.';
+    END IF;
+
+    -- Verificar si el departamento existe y pertenece al hospital correspondiente
+    SELECT Id_departamento INTO id_departamento_existente
+    FROM Departamento
+    WHERE Nombre = departamento_param AND Id_hospital = id_hospital_existente
+    LIMIT 1;
+
+    IF id_departamento_existente IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El departamento no existe o no corresponde al hospital especificado.';
+    END IF;
+
+    -- Actualizar los datos del médico con la dirección correcta y el departamento correspondiente
+    UPDATE Medico 
+    SET 
+        Nombre = nombre_param,
+        Apellidos = apellidos_param,
+        Telefono = telefono_param,
+        Fecha_nacimiento = fecha_nacimiento_param,
+        Id_direccion = id_direccion_existente,
+        Email = email_param,
+        PIN = pin_param,
+        Id_departamento = id_departamento_existente
+    WHERE Id_medico = id_medico_param;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `Editar_Paciente` (IN `id_paciente_param` INT, IN `nombre_param` VARCHAR(100), IN `apellidos_param` VARCHAR(100), IN `telefono_param` VARCHAR(20), IN `fecha_nacimiento_param` DATE, IN `ciudad_param` VARCHAR(100), IN `calle_param` VARCHAR(255), IN `email_param` VARCHAR(100), IN `pin_param` VARCHAR(50))   BEGIN
@@ -452,26 +506,52 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `Obtener_Hospitales_Cursor` ()   BEG
         JOIN Direccion dir ON h.Id_direccion = dir.Id_direccion;  -- JOIN añadido
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `Obtener_Medicos_Cursor` ()   BEGIN
-    SELECT 
-        m.Id_medico,
-        m.Nombre,
-        m.Apellidos,
-        m.Telefono,
-        m.Fecha_nacimiento,
-        dir.Ciudad,  -- Desde Direccion
-        dir.Calle,   -- Desde Direccion
-        m.Email,
-        m.PIN,
-        d.Id_departamento,
-        d.Nombre AS Nombre_departamento,
-        h.Id_hospital,
-        h.Nombre AS Nombre_hospital
-    FROM 
-        Medico m
-        JOIN Direccion dir ON m.Id_direccion = dir.Id_direccion  -- JOIN añadido
-        JOIN Departamento d ON m.Id_departamento = d.Id_departamento
-        JOIN Hospital h ON d.Id_hospital = h.Id_hospital;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Obtener_Medicos_Cursor` (IN `id_medico_param` INT)   BEGIN
+    IF id_medico_param IS NULL OR id_medico_param = 0 THEN
+        -- Si no se proporciona un ID, devuelve todos los médicos
+        SELECT 
+            m.Id_medico,
+            m.Nombre,
+            m.Apellidos,
+            m.Telefono,
+            m.Fecha_nacimiento,
+            dir.Ciudad,  
+            dir.Calle,   
+            m.Email,
+            m.PIN,
+            d.Id_departamento,
+            d.Nombre AS Nombre_departamento,
+            h.Id_hospital,
+            h.Nombre AS Nombre_hospital
+        FROM 
+            Medico m
+            JOIN Direccion dir ON m.Id_direccion = dir.Id_direccion  
+            JOIN Departamento d ON m.Id_departamento = d.Id_departamento
+            JOIN Hospital h ON d.Id_hospital = h.Id_hospital;
+    ELSE
+        -- Si se proporciona un ID, devuelve solo ese médico
+        SELECT 
+            m.Id_medico,
+            m.Nombre,
+            m.Apellidos,
+            m.Telefono,
+            m.Fecha_nacimiento,
+            dir.Ciudad,  
+            dir.Calle,   
+            m.Email,
+            m.PIN,
+            d.Id_departamento,
+            d.Nombre AS Nombre_departamento,
+            h.Id_hospital,
+            h.Nombre AS Nombre_hospital
+        FROM 
+            Medico m
+            JOIN Direccion dir ON m.Id_direccion = dir.Id_direccion  
+            JOIN Departamento d ON m.Id_departamento = d.Id_departamento
+            JOIN Hospital h ON d.Id_hospital = h.Id_hospital
+        WHERE 
+            m.Id_medico = id_medico_param;
+    END IF;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `Obtener_Pacientes_Cursor` (IN `id_paciente_param` INT)   BEGIN
@@ -623,7 +703,9 @@ INSERT INTO `direccion` (`Id_direccion`, `Ciudad`, `Calle`) VALUES
 (1, 'Madrid', 'Gran Vía 1'),
 (2, 'Barcelona', 'Diagonal 100'),
 (3, 'Valencia', 'Avenida del Puerto 45'),
-(4, 'cadiz', 'francisco');
+(4, 'cadiz', 'francisco'),
+(5, 'sfsf', 'aefeaf'),
+(6, 'sfkea', 'akfe100');
 
 -- --------------------------------------------------------
 
@@ -683,7 +765,7 @@ CREATE TABLE `medico` (
 
 INSERT INTO `medico` (`Id_medico`, `Id_departamento`, `Nombre`, `Apellidos`, `Telefono`, `Fecha_nacimiento`, `Id_direccion`, `Email`, `PIN`) VALUES
 (1, 1, 'Laura', 'Fernández', 642345678, '1975-03-21', 1, 'laura.fernandez@mail.com', 4321),
-(2, 2, 'David', 'Martínez', 652345678, '1983-11-10', 2, 'david.martinez@mail.com', 8765),
+(2, 1, 'sf', 'sf', 34, '1983-11-22', 6, 'david@mail.com', 8762),
 (3, 3, 'Sofía', 'Ruiz', 662345678, '1990-06-15', 3, 'sofia.ruiz@mail.com', 1112);
 
 -- --------------------------------------------------------
@@ -804,7 +886,7 @@ ALTER TABLE `diagnostico`
 -- AUTO_INCREMENT for table `direccion`
 --
 ALTER TABLE `direccion`
-  MODIFY `Id_direccion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `Id_direccion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `hospital`

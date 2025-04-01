@@ -5,18 +5,35 @@ $conexion = conexion();
 // Inicializar mensaje vacío
 $mensaje = "";
 
-// Obtener el ID del paciente desde la URL
-if (isset($_GET['id'])) {
-    $id_paciente = $_GET['id'];
-    
-    // Obtener los datos actuales del paciente
-    $sql = "CALL Obtener_Medicos_Cursor($id_medico)";
+// Inicializar las variables para los valores del formulario
+$nombre = $apellidos = $telefono = $fecha_nacimiento = $ciudad = $calle = $email = $pin = $departamento = $hospital = "";
 
+// Obtener el ID del médico desde la URL
+if (isset($_GET['id'])) {
+    $id_medico = $_GET['id'];
+    
+    // Obtener los datos actuales del médico
+    $sql = "CALL Obtener_Medicos_Cursor(?)";
     $stmt = mysqli_prepare($conexion, $sql);
+    mysqli_stmt_bind_param($stmt, "i", $id_medico);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
-    $paciente = mysqli_fetch_assoc($result);
+    $medico = mysqli_fetch_assoc($result);
     mysqli_stmt_close($stmt);
+    
+    // Asignar los valores a las variables del formulario
+    if ($_SERVER['REQUEST_METHOD'] != 'POST') {
+        $nombre = $medico['Nombre'];
+        $apellidos = $medico['Apellidos'];
+        $telefono = $medico['Telefono'];
+        $fecha_nacimiento = $medico['Fecha_nacimiento'];
+        $ciudad = $medico['Ciudad'];
+        $calle = $medico['Calle'];
+        $email = $medico['Email'];
+        $pin = $medico['PIN'];
+        $departamento = $medico['Nombre_departamento'];
+        $hospital = $medico['Nombre_hospital'];
+    }
 }
 
 // Actualizar los datos si se envía el formulario
@@ -29,20 +46,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $calle = $_POST['calle'];
     $email = $_POST['email'];
     $pin = $_POST['pin'];
+    $departamento = $_POST['departamento'];
+    $hospital = $_POST['hospital'];
 
-    $sql_update = "CALL Editar_Medico(?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    $stmt_update = mysqli_prepare($conexion, $sql_update);
-    mysqli_stmt_bind_param($stmt_update, "issssssss", $id_paciente, $nombre, $apellidos, $telefono, $fecha_nacimiento, $ciudad, $calle, $email, $pin);
+    try {
+        // Realizar la conexión y la ejecución de la consulta
+        $sql_update = "CALL Editar_Medico(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt_update = mysqli_prepare($conexion, $sql_update);
 
-    if (mysqli_stmt_execute($stmt_update)) {
-        $mensaje = "<p style='color: green; text-align: center;'>Médico actualizado correctamente.</p>";
-    } else {
-        $mensaje = "<p style='color: red; text-align: center;'>Error al actualizar: " . mysqli_error($conexion) . "</p>";
+        // Asegúrate de que todos los valores estén bien definidos
+        mysqli_stmt_bind_param($stmt_update, "issssssssss", $id_medico, $nombre, $apellidos, $telefono, $fecha_nacimiento, $ciudad, $calle, $email, $pin, $departamento, $hospital);
+
+        if (mysqli_stmt_execute($stmt_update)) {
+            $mensaje = "<p style='color: green; text-align: center;'>Médico actualizado correctamente.</p>";
+        } else {
+            throw new Exception("Error al ejecutar la consulta: " . mysqli_error($conexion));
+        }
+
+        mysqli_stmt_close($stmt_update);
+    } catch (Exception $e) {
+        // Captura la excepción y muestra el mensaje de error
+        $mensaje = "<p style='color: red; text-align: center;'>Error al editar: " . $e->getMessage() . "</p>";
     }
-
-    mysqli_stmt_close($stmt_update);
-}
-
+} 
 
 mysqli_close($conexion);
 ?>
@@ -71,28 +97,34 @@ mysqli_close($conexion);
     
         <form action="" method="post" id="formulario">
             <label for="nombre">Nombre</label><br>
-            <input type="text" id="nombre" name="nombre" value="<?php echo htmlspecialchars($paciente['Nombre']); ?>" required>
+            <input type="text" id="nombre" name="nombre" value="<?php echo htmlspecialchars($nombre); ?>" required>
             <br><br>
             <label for="apellidos">Apellidos</label><br>
-            <input type="text" id="apellidos" name="apellidos" value="<?php echo htmlspecialchars($paciente['Apellidos']); ?>" required>
+            <input type="text" id="apellidos" name="apellidos" value="<?php echo htmlspecialchars($apellidos); ?>" required>
             <br><br>
             <label for="telefono">Teléfono</label><br>
-            <input type="number" id="telefono" name="telefono" value="<?php echo htmlspecialchars($paciente['Telefono']); ?>" required>
+            <input type="number" id="telefono" name="telefono" value="<?php echo htmlspecialchars($telefono); ?>" required>
             <br><br>
             <label for="fecha">Fecha de nacimiento</label><br>
-            <input type="date" id="fecha" name="fecha_nacimiento" value="<?php echo htmlspecialchars($paciente['Fecha_nacimiento']); ?>" required>
+            <input type="date" id="fecha" name="fecha_nacimiento" value="<?php echo htmlspecialchars($fecha_nacimiento); ?>" required>
             <br><br>
             <label for="ciudad">Ciudad</label><br>
-            <input type="text" id="ciudad" name="ciudad" value="<?php echo htmlspecialchars($paciente['Ciudad']); ?>" required>
+            <input type="text" id="ciudad" name="ciudad" value="<?php echo htmlspecialchars($ciudad); ?>" required>
             <br><br>
             <label for="calle">Calle</label><br>
-            <input type="text" id="calle" name="calle" value="<?php echo htmlspecialchars($paciente['Calle']); ?>" required>
+            <input type="text" id="calle" name="calle" value="<?php echo htmlspecialchars($calle); ?>" required>
             <br><br>
             <label for="email">Email</label><br>
-            <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($paciente['Email']); ?>" required>
+            <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($email); ?>" required>
             <br><br>
             <label for="pin">Pin</label><br>
-            <input type="number" id="pin" name="pin" value="<?php echo htmlspecialchars($paciente['PIN']); ?>" required>
+            <input type="number" id="pin" name="pin" value="<?php echo htmlspecialchars($pin); ?>" required>
+            <br><br>
+            <label for="departamento">Departamento</label><br>
+            <input type="text" id="departamento" name="departamento" value="<?php echo htmlspecialchars($departamento); ?>" required>
+            <br><br>
+            <label for="hospital">Hospital</label><br>
+            <input type="text" id="hospital" name="hospital" value="<?php echo htmlspecialchars($hospital); ?>" required>
             <br><br>
             <button type="submit">Guardar Cambios</button>
         </form>
