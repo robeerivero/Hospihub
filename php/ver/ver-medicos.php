@@ -45,6 +45,7 @@ $result = mysqli_query($conexion, $sql);
                 <th>Nombre Departamento</th>
                 <th>Id Departamento</th>
                 <th>Nombre del Hospital</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>

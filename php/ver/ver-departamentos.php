@@ -2,9 +2,8 @@
 include('../conexion.php');
 $conexion = conexion();
 
-// Consulta SQL corregida para obtener los departamentos con la dirección del hospital
-$sql = "CALL Obtener_Departamentos_Hospitales_Cursor()";
-
+// Consulta SQL para obtener los departamentos con la dirección del hospital
+$sql = "CALL Obtener_Departamentos_Hospitales_Cursor(NULL)";
 $result = mysqli_query($conexion, $sql);
 
 ?>
@@ -14,7 +13,7 @@ $result = mysqli_query($conexion, $sql);
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HospiHub - Lista de departamentos</title>
+    <title>HospiHub - Lista de Departamentos</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="../css/ver.css" type="text/css">
 </head>
@@ -32,13 +31,14 @@ $result = mysqli_query($conexion, $sql);
     <table class='table table-striped'>
         <thead>
             <tr>
-                <th>Id del Departamento</th>
+                <th>Id Departamento</th>
                 <th>Nombre Departamento</th>
-                <th>Ubicación Departamento</th>
+                <th>Ubicación</th>
                 <th>Id Hospital</th>
                 <th>Nombre Hospital</th>
                 <th>Ciudad Hospital</th>
                 <th>Calle Hospital</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -51,6 +51,11 @@ $result = mysqli_query($conexion, $sql);
                     <td><?php echo htmlspecialchars($row['Nombre_hospital']); ?></td>
                     <td><?php echo htmlspecialchars($row['Ciudad_hospital']); ?></td>
                     <td><?php echo htmlspecialchars($row['Calle_hospital']); ?></td>
+                    <td>
+                        <a href="../editar/editar-departamento.php?id=<?php echo $row['Id_departamento']; ?>">
+                            <button class="btn-editar">Editar</button>
+                        </a>
+                    </td>
                 </tr>
             <?php } ?>
         </tbody>
@@ -62,8 +67,6 @@ $result = mysqli_query($conexion, $sql);
     mysqli_close($conexion);
     ?>
 
-    <a href="../menu-admin.php">Regresar al menú del administrador <span class="material-symbols-outlined">
-        arrow_left_alt
-        </span></a> <br>
+    <a href="../menu-admin.php">Regresar al menú del administrador <span class="material-symbols-outlined">arrow_left_alt</span></a>
 </body>
 </html>
