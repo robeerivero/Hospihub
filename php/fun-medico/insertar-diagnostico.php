@@ -1,78 +1,102 @@
 <?php
 // Verificar si se recibieron los datos del formulario
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cita_id']) && isset($_POST['descripcion']) && isset($_POST['recomendacion'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cita_id'], $_POST['descripcion'], $_POST['recomendacion'])) {
     // Obtener los datos del formulario
     $cita_id = $_POST['cita_id'];
-    $descripcion = $_POST['descripcion'];
-    $recomendacion = $_POST['recomendacion'];
+    $descripcion = trim($_POST['descripcion']);
+    $recomendacion = trim($_POST['recomendacion']);
 
     // Conectar a la base de datos
     include('../conexion.php');
-    $conexion = new mysqli($host, $usuario, $password, $base_de_datos);
+    $conexion = conexion();
 
-    // Verificar si la conexión fue exitosa
-    if ($conexion->connect_error) {
-        die("Conexión fallida: " . $conexion->connect_error);
-    }
+    try {
+        // Paso 1: Insertar el diagnóstico
+        $sqlDiagnostico = "CALL Insertar_Diagnostico(?, ?, ?)";
+        $stmtDiagnostico = $conexion->prepare($sqlDiagnostico);
+        $stmtDiagnostico->bind_param("iss", $cita_id, $descripcion, $recomendacion);
+        
+        if (!$stmtDiagnostico->execute()) {
+            throw new Exception("Error al insertar el diagnóstico");
+        }
 
-    // Preparar la consulta para insertar el diagnóstico
-    $sqlDiagnostico = "INSERT INTO Diagnostico (cita_id, descripcion, recomendacion) VALUES (?, ?, ?)";
-    $stmtDiagnostico = $conexion->prepare($sqlDiagnostico);
+        // Liberar resultados del primer procedimiento
+        $stmtDiagnostico->close();
+        
+        // Limpiar resultados pendientes
+        while ($conexion->next_result()) { 
+            if ($result = $conexion->store_result()) {
+                $result->free(); 
+            }
+        }
 
-    // Bind de los parámetros
-    $stmtDiagnostico->bind_param("iss", $cita_id, $descripcion, $recomendacion);
+        // Obtener ID del diagnóstico
+        $idDiagnostico = obtenerIdDiagnostico($conexion);
 
-    // Ejecutar la consulta para insertar el diagnóstico
-    $resultadoDiagnostico = $stmtDiagnostico->execute();
+        if ($idDiagnostico <= 0) {
+            throw new Exception("No se pudo obtener el ID del diagnóstico");
+        }
 
-    // Verificar si la inserción del diagnóstico fue exitosa
-    if ($resultadoDiagnostico) {
-        echo "El diagnóstico se ha insertado correctamente.<br>";
+        echo "✅ El diagnóstico se ha insertado correctamente.<br>";
 
-        // Obtener el ID del diagnóstico insertado
-        $idDiagnostico = $conexion->insert_id;
-
-        // Verificar si se recibieron los datos de los medicamentos
-        if (isset($_POST['nombre_medicamento']) && isset($_POST['frecuencia'])) {
-            // Obtener los datos de los medicamentos
-            $nombresMedicamentos = $_POST['nombre_medicamento'];
-            $frecuencias = $_POST['frecuencia'];
-
-            // Preparar la consulta para insertar los medicamentos asociados al diagnóstico
-            $sqlMedicamento = "INSERT INTO Medicamento (id_diagnostico, nombre_medicamento, frecuencia) VALUES (?, ?, ?)";
+        // Paso 2: Procesar medicamentos
+        if (!empty($_POST['nombre_medicamento']) && !empty($_POST['frecuencia'])) {
+            // Preparar la consulta una sola vez
+            $sqlMedicamento = "CALL Insertar_Medicamento(?, ?, ?)";
             $stmtMedicamento = $conexion->prepare($sqlMedicamento);
 
-            // Iterar sobre los datos de los medicamentos y ejecutar la consulta para cada uno
-            for ($i = 0; $i < count($nombresMedicamentos); $i++) {
-                // Obtener los datos del medicamento actual
-                $nombreMedicamento = $nombresMedicamentos[$i];
-                $frecuencia = $frecuencias[$i];
+            if (!$stmtMedicamento) {
+                throw new Exception("Error al preparar la consulta de medicamentos: " . $conexion->error);
+            }
 
-                // Bind de los parámetros
-                $stmtMedicamento->bind_param("iss", $idDiagnostico, $nombreMedicamento, $frecuencia);
+            for ($i = 0; $i < count($_POST['nombre_medicamento']); $i++) {
+                $nombre = trim($_POST['nombre_medicamento'][$i]);
+                $frecuencia = trim($_POST['frecuencia'][$i]);
 
-                // Ejecutar la consulta para insertar el medicamento
-                $resultadoMedicamento = $stmtMedicamento->execute();
-
-                // Verificar si la inserción del medicamento fue exitosa
-                if ($resultadoMedicamento) {
-                    echo "El medicamento '$nombreMedicamento' se ha asociado al diagnóstico correctamente.<br>";
-                } else {
-                    echo "Error al insertar el medicamento '$nombreMedicamento'.<br>";
+                if (!empty($nombre) && !empty($frecuencia)) {
+                    $stmtMedicamento->bind_param("iss", $idDiagnostico, $nombre, $frecuencia);
+                    
+                    if ($stmtMedicamento->execute()) {
+                        echo "✅ Medicamento '{$nombre}' insertado correctamente.<br>";
+                        
+                        // Liberar resultados después de cada ejecución
+                        while ($conexion->next_result()) { 
+                            if ($result = $conexion->store_result()) {
+                                $result->free(); 
+                            }
+                        }
+                    } else {
+                        echo "❌ Error al insertar el medicamento '{$nombre}': " . $stmtMedicamento->error . "<br>";
+                    }
                 }
             }
+            $stmtMedicamento->close();
         } else {
-            echo "No se recibieron datos de medicamentos.<br>";
+            echo "ℹ️ No se recibieron datos de medicamentos.<br>";
         }
-    } else {
-        echo "Error al insertar el diagnóstico.<br>";
+    } catch (Exception $e) {
+        echo "❌ Error: " . $e->getMessage();
+    } finally {
+        if ($conexion) $conexion->close();
     }
-
-    // Cerrar las conexiones y liberar los recursos
-    $stmtDiagnostico->close();
-    $stmtMedicamento->close();
-    $conexion->close();
 } else {
-    echo "No se recibieron todos los datos necesarios.<br>";
+    echo "❌ No se recibieron todos los datos necesarios.<br>";
+}
+
+function obtenerIdDiagnostico($conexion) {
+    // Liberar resultados previos
+    while ($conexion->next_result()) { 
+        if ($result = $conexion->store_result()) {
+            $result->free(); 
+        }
+    }
+    
+    $sql = "SELECT Obtener_Max_Id_Diagnostico() AS max_id";
+    if ($result = $conexion->query($sql)) {
+        $row = $result->fetch_assoc();
+        $result->free();
+        return (int)$row['max_id'];
+    }
+    return -1;
 }
 ?>

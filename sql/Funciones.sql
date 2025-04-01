@@ -1,17 +1,20 @@
 DELIMITER $$
 
 -- Procedimiento para insertar un paciente
+
 CREATE PROCEDURE Insertar_Paciente(
-    IN nombre VARCHAR(50),
-    IN apellidos VARCHAR(50),
-    IN telefono INT,
-    IN fecha_nacimiento DATE,
-    IN ciudad VARCHAR(50),
-    IN calle VARCHAR(50),
-    IN email VARCHAR(50),
-    IN pin INT
+    IN nombre_param VARCHAR(100),
+    IN apellidos_param VARCHAR(100),
+    IN telefono_param VARCHAR(20),
+    IN fecha_nacimiento_param DATE,
+    IN ciudad_param VARCHAR(100),
+    IN calle_param VARCHAR(255),
+    IN email_param VARCHAR(100),
+    IN pin_param VARCHAR(50)
 )
 BEGIN
+    DECLARE id_direccion_existente INT;
+
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
@@ -20,20 +23,31 @@ BEGIN
 
     START TRANSACTION;
 
-    -- Insertar la dirección si no existe
-    INSERT INTO Direccion (Ciudad, Calle) 
-    SELECT ciudad, calle FROM DUAL
-    WHERE NOT EXISTS (SELECT 1 FROM Direccion WHERE Ciudad = ciudad AND Calle = calle);
-    
-    SET @id_direccion = (SELECT Id_direccion FROM Direccion WHERE Ciudad = ciudad AND Calle = calle LIMIT 1);
+    -- Verificar si la dirección ya existe
+    SELECT Id_direccion INTO id_direccion_existente
+    FROM Direccion
+    WHERE Ciudad = ciudad_param AND Calle = calle_param
+    LIMIT 1;
 
-    -- Insertar el paciente
+    -- Si no existe, insertamos una nueva dirección
+    IF id_direccion_existente IS NULL THEN
+        INSERT INTO Direccion (Ciudad, Calle)
+        VALUES (ciudad_param, calle_param);
+        
+        -- Obtener el ID de la nueva dirección
+        SET id_direccion_existente = LAST_INSERT_ID();
+    END IF;
+
+    -- Insertar el paciente con la dirección correcta
     INSERT INTO Paciente (Nombre, Apellidos, Telefono, Fecha_nacimiento, Id_direccion, Email, PIN)
-    VALUES (nombre, apellidos, telefono, fecha_nacimiento, @id_direccion, email, pin);
+    VALUES (nombre_param, apellidos_param, telefono_param, fecha_nacimiento_param, id_direccion_existente, email_param, pin_param);
 
     COMMIT;
     SELECT 'Paciente insertado correctamente' AS Mensaje;
-END$$
+END $$
+
+
+
 
 -- Procedimiento para insertar un médico
 CREATE PROCEDURE Insertar_Medico(
@@ -111,12 +125,15 @@ BEGIN
 END$$
 
 -- Procedimiento para insertar un hospital
+
 CREATE PROCEDURE Insertar_Hospital(
-    IN nombre VARCHAR(50),
-    IN ciudad VARCHAR(50),
-    IN calle VARCHAR(50)
+    IN nombre_param VARCHAR(50),
+    IN ciudad_param VARCHAR(50),
+    IN calle_param VARCHAR(50)
 )
 BEGIN
+    DECLARE id_direccion_existente INT;
+
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
@@ -125,21 +142,32 @@ BEGIN
 
     START TRANSACTION;
 
-    -- Insertar la dirección si no existe
-    INSERT INTO Direccion (Ciudad, Calle) 
-    SELECT ciudad, calle FROM DUAL
-    WHERE NOT EXISTS (SELECT 1 FROM Direccion WHERE Ciudad = ciudad AND Calle = calle);
-    
-    SET @id_direccion = (SELECT Id_direccion FROM Direccion WHERE Ciudad = ciudad AND Calle = calle LIMIT 1);
+    -- Verificar si la dirección ya existe
+    SELECT Id_direccion INTO id_direccion_existente
+    FROM Direccion
+    WHERE Ciudad = ciudad_param AND Calle = calle_param
+    LIMIT 1;
+
+    -- Si no existe, insertamos una nueva dirección
+    IF id_direccion_existente IS NULL THEN
+        INSERT INTO Direccion (Ciudad, Calle)
+        VALUES (ciudad_param, calle_param);
+        
+        -- Obtener el ID de la nueva dirección
+        SET id_direccion_existente = LAST_INSERT_ID();
+    END IF;
 
     -- Insertar el hospital si no existe
-    INSERT INTO Hospital (Nombre, Id_direccion) 
-    SELECT nombre, @id_direccion FROM DUAL
-    WHERE NOT EXISTS (SELECT 1 FROM Hospital WHERE Nombre = nombre);
+    IF NOT EXISTS (SELECT 1 FROM Hospital WHERE Nombre = nombre_param) THEN
+        INSERT INTO Hospital (Nombre, Id_direccion) 
+        VALUES (nombre_param, id_direccion_existente);
+    END IF;
 
     COMMIT;
     SELECT 'Hospital insertado correctamente' AS Mensaje;
-END$$
+END $$
+
+
 
 -- Procedimiento para insertar un diagnóstico
 CREATE PROCEDURE Insertar_Diagnostico(
@@ -167,6 +195,35 @@ BEGIN
 
     COMMIT;
     SELECT 'Diagnóstico insertado correctamente' AS Mensaje;
+END$$
+
+DELIMITER ;
+-----------------------------
+   --INSERTAR MEDICAMENTO--    
+-----------------------------
+DELIMITER $$
+
+CREATE PROCEDURE Insertar_Medicamento(
+    IN id_diagnostico INT,
+    IN nombre_medicamento VARCHAR(255),
+    IN frecuencia VARCHAR(255)
+)
+BEGIN
+    DECLARE exit handler for SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        -- Usar GET DIAGNOSTICS para MySQL en lugar de ERROR_MESSAGE()
+        GET DIAGNOSTICS CONDITION 1 @sqlstate = RETURNED_SQLSTATE, 
+        @errno = MYSQL_ERRNO, @text = MESSAGE_TEXT;
+        SELECT CONCAT('Error al insertar el medicamento: ', @text) AS mensaje_error;
+    END;
+
+    START TRANSACTION;
+    INSERT INTO Tabla_Medicamento (Id_diagnostico, Nombre, Frecuencia)
+    VALUES (id_diagnostico, nombre_medicamento, frecuencia);
+    COMMIT;
+
+    SELECT 'Medicamento insertado correctamente' AS mensaje;
 END$$
 
 DELIMITER ;
