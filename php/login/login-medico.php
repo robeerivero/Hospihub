@@ -4,10 +4,8 @@
     <title>HospiHub - Login de medico</title>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
-    <!-- Metadatos del autor y diseñador del sitio -->
     <meta name="author" content="Carlos Antonio Cortés Lora, Roberto Rivero Díaz">
     <meta name="designer" content="Carlos Antonio Cortés Lora, Roberto Rivero Díaz">
-    <!-- Enlaces a las fuentes de Google y hojas de estilos -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
@@ -25,32 +23,39 @@
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Recuperar datos del formulario
         $email = $_POST["email"];
-        $pin = $_POST["pin"];
+        $password = $_POST["password"];  // Cambié 'pin' a 'password', porque ahora estamos manejando contraseñas
 
         // Preparar la consulta para verificar credenciales
-        $sql = "SELECT id_medico FROM Medico WHERE email = ? AND pin = ?";
+        $sql = "SELECT id_medico, password FROM Medico WHERE email = ?";
         $stmt = mysqli_prepare($conexion, $sql);
-        
+
         if ($stmt) {
             // Vincular parámetros
-            mysqli_stmt_bind_param($stmt, "ss", $email, $pin);
+            mysqli_stmt_bind_param($stmt, "s", $email);
             mysqli_stmt_execute($stmt);
             mysqli_stmt_store_result($stmt);
 
             // Verificar si se encontró un médico con esas credenciales
             if (mysqli_stmt_num_rows($stmt) > 0) {
-                mysqli_stmt_bind_result($stmt, $medico_id);
+                mysqli_stmt_bind_result($stmt, $medico_id, $storedPassword);
                 mysqli_stmt_fetch($stmt);
 
-                // Iniciar sesión y redirigir
-                session_start();
-                $_SESSION['medico_id'] = $medico_id;
-                $_SESSION['email'] = $email;
-                header("Location: ../menu-medico.php");
-                exit();
+                // Verificar si la contraseña ingresada coincide con el hash almacenado
+                if (password_verify($password, $storedPassword)) {
+                    // Iniciar sesión y redirigir
+                    session_start();
+                    $_SESSION['medico_id'] = $medico_id;
+                    $_SESSION['email'] = $email;
+                    header("Location: ../menu-medico.php");
+                    exit();
+                } else {
+                    echo "<br><br><br><br><hr style='border-top: 3px solid red; border-bottom: 3px solid red;'>
+                          <p style='color:red; text-align:center; font-size: 1.5em;'>Las credenciales de inicio de sesión son incorrectas. Por favor, inténtalo de nuevo.</p>
+                          <hr style='border-top: 3px solid red; border-bottom: 3px solid red;'>";
+                }
             } else {
                 echo "<br><br><br><br><hr style='border-top: 3px solid red; border-bottom: 3px solid red;'>
-                      <p style='color:red; text-align:center; font-size: 1.5em;'>Las credenciales de inicio de sesión son incorrectas. Por favor, inténtalo de nuevo.</p>
+                      <p style='color:red; text-align:center; font-size: 1.5em;'>El correo electrónico no está registrado. Por favor, inténtalo de nuevo.</p>
                       <hr style='border-top: 3px solid red; border-bottom: 3px solid red;'>";
             }
 
@@ -77,8 +82,8 @@
         <input type="text" id="email" name="email" required>
         <br><br>
 
-        <label for="pin">Pin</label><br>
-        <input type="number" id="pin" name="pin" required>
+        <label for="password">Contraseña</label><br>  <!-- Cambié 'pin' a 'password' -->
+        <input type="password" id="password" name="password" required>
         <br><br>
 
         <button type="submit">Entrar</button>

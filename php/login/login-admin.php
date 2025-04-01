@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>HospiHub - Login de paciente</title>
+    <title>HospiHub - Login de administrador</title>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
     <!-- Metadatos del autor y diseñador del sitio -->
-    <meta name="author" content="Carlos Antonio Cortés Lora, Roberto Rivero Díaz">
-    <meta name="designer" content="Carlos Antonio Cortés Lora, Roberto Rivero Díaz">
+    <meta name="author" content="Jesús Javier Gallego Ibañez, Roberto Rivero Díaz, David Conde Salado">
+    <meta name="designer" content="David Conde Salado, Jesús Javier Gallego Ibañez, Roberto Rivero Díaz">
     <!-- Enlaces a las fuentes de Google y hojas de estilos -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,8 +15,6 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <!-- Enlaces a los archivos CSS -->
     <link rel="stylesheet" href="../css/register.css">
-    <!-- Enlace al archivo JavaScript -->
-    
 </head>
 <body>
 
@@ -30,33 +28,39 @@ session_start();
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Recuperar datos del formulario
     $email = $_POST["email"];
-    $pin = $_POST["pin"];
+    $password = $_POST["password"];  // Cambié 'pin' a 'password', porque es una contraseña en texto claro
     
     // Preparar la consulta SQL para verificar las credenciales
-    $sql = "SELECT id_paciente FROM Paciente WHERE email = ? AND pin = ?";
+    $sql = "SELECT id_admin, password FROM Admin WHERE email = ?";
 
     // Preparar la sentencia
     if ($stmt = mysqli_prepare($conexion, $sql)) {
         // Vincular los parámetros
-        mysqli_stmt_bind_param($stmt, "si", $email, $pin);  // "si" significa que email es string y pin es integer
+        mysqli_stmt_bind_param($stmt, "s", $email);  // "s" significa que email es un string
 
         // Ejecutar la consulta
         mysqli_stmt_execute($stmt);
 
         // Vincular el resultado
-        mysqli_stmt_bind_result($stmt, $paciente_id);
+        mysqli_stmt_bind_result($stmt, $admin_id, $storedPassword);
 
         // Verificar si se obtuvo un resultado
         if (mysqli_stmt_fetch($stmt)) {
-            // Si existe el paciente, iniciar sesión
-            $_SESSION['id_paciente'] = $paciente_id;
+            // Verificar si la contraseña ingresada coincide con el hash almacenado
+            if (password_verify($password, $storedPassword)) {
+                // Si la contraseña es correcta, iniciar sesión
+                $_SESSION['admin_id'] = $admin_id;
 
-            // Redirigir al admin al menu de administrador
-            header("Location: ../menu-admin.php?id_paciente=" . $paciente_id);
-            exit();
+                // Redirigir al administrador a su página de menú
+                header("Location: ../admin-dashboard.php");
+                exit();
+            } else {
+                // Si la contraseña es incorrecta
+                echo "<br><br><br><br><hr style='border-top: 3px solid red; border-bottom: 3px solid red;'><p style='color:red; text-align:center; font-size: 1.5em;'>Las credenciales de inicio de sesión son incorrectas. Por favor, inténtalo de nuevo.</p><hr style='border-top: 3px solid red; border-bottom: 3px solid red;'>";
+            }
         } else {
-            // Si no se encuentran las credenciales, mostrar mensaje de error
-            echo "<br><br><br><br><hr style='border-top: 3px solid red; border-bottom: 3px solid red;'><p style='color:red; text-align:center; font-size: 1.5em;'>Las credenciales de inicio de sesión son incorrectas. Por favor, inténtalo de nuevo.</p><hr style='border-top: 3px solid red; border-bottom: 3px solid red;'>";
+            // Si no se encuentra el administrador
+            echo "<br><br><br><br><hr style='border-top: 3px solid red; border-bottom: 3px solid red;'><p style='color:red; text-align:center; font-size: 1.5em;'>El correo electrónico no está registrado. Por favor, inténtalo de nuevo.</p><hr style='border-top: 3px solid red; border-bottom: 3px solid red;'>";
         }
 
         // Cerrar la sentencia
@@ -75,7 +79,7 @@ mysqli_close($conexion);
 </header>
 
 <div id="contenedor">
-    <h1>Iniciar sesión como paciente<span class="material-symbols-outlined">
+    <h1>Iniciar sesión como administrador<span class="material-symbols-outlined">
         personal_injury</span>
     </h1>
 
@@ -85,13 +89,12 @@ mysqli_close($conexion);
 
         <br><br>
 
-        <label for="pin">Pin</label><br>
-        <input type="number" id="pin" name="pin" required>
-        
+        <label for="password">Contraseña</label><br>
+        <input type="password" id="password" name="password" required>  <!-- Cambié "pin" a "password" -->
+
         <br><br>
         
         <button type="submit">Entrar</button>
-
     </form>
     <br><br>
 </div>
