@@ -499,22 +499,41 @@ DELIMITER ;
 -- OBTENER PACIENTES
 -- -------------------------------
 DELIMITER //
-CREATE PROCEDURE Obtener_Pacientes_Cursor()
+CREATE PROCEDURE Obtener_Pacientes_Cursor(IN id_paciente_param INT)
 BEGIN
-    SELECT 
-        p.Id_paciente,
-        p.Nombre,
-        p.Apellidos,
-        p.Telefono,
-        p.Fecha_nacimiento,
-        dir.Ciudad,  -- Desde Direccion
-        dir.Calle,   -- Desde Direccion
-        p.Email,
-        p.PIN
-    FROM 
-        Paciente p
-        JOIN Direccion dir ON p.Id_direccion = dir.Id_direccion;  -- JOIN añadido
-END //
+    IF id_paciente_param IS NULL THEN
+        -- Si no se recibe un ID, devolver todos los pacientes
+        SELECT 
+            p.Id_paciente,
+            p.Nombre,
+            p.Apellidos,
+            p.Telefono,
+            p.Fecha_nacimiento,
+            dir.Ciudad,
+            dir.Calle,
+            p.Email,
+            p.PIN
+        FROM 
+            Paciente p
+        JOIN Direccion dir ON p.Id_direccion = dir.Id_direccion;
+    ELSE
+        -- Si se recibe un ID, devolver solo ese paciente
+        SELECT 
+            p.Id_paciente,
+            p.Nombre,
+            p.Apellidos,
+            p.Telefono,
+            p.Fecha_nacimiento,
+            dir.Ciudad,
+            dir.Calle,
+            p.Email,
+            p.PIN
+        FROM 
+            Paciente p
+        JOIN Direccion dir ON p.Id_direccion = dir.Id_direccion
+        WHERE p.Id_paciente = id_paciente_param;
+    END IF;
+END//
 DELIMITER ;
 
 -- -------------------------------
@@ -626,5 +645,56 @@ BEGIN
         END IF;
     END IF;
 END //
+
+DELIMITER ;
+
+DELIMITER $$
+
+-- -------------------------------
+-- Editar paciente
+-- -------------------------------
+
+CREATE PROCEDURE Editar_Paciente(
+    IN id_paciente_param INT,
+    IN nombre_param VARCHAR(100),
+    IN apellidos_param VARCHAR(100),
+    IN telefono_param VARCHAR(20),
+    IN fecha_nacimiento_param DATE,
+    IN ciudad_param VARCHAR(100),
+    IN calle_param VARCHAR(255),
+    IN email_param VARCHAR(100),
+    IN pin_param VARCHAR(50)
+)
+BEGIN
+    DECLARE id_direccion_existente INT;
+
+    -- Verificar si la dirección ya existe
+    SELECT Id_direccion INTO id_direccion_existente
+    FROM Direccion
+    WHERE Ciudad = ciudad_param AND Calle = calle_param
+    LIMIT 1;
+
+    -- Si no existe, insertamos una nueva dirección
+    IF id_direccion_existente IS NULL THEN
+        INSERT INTO Direccion (Ciudad, Calle)
+        VALUES (ciudad_param, calle_param);
+        
+        -- Obtener el ID de la nueva dirección
+        SET id_direccion_existente = LAST_INSERT_ID();
+    END IF;
+
+    -- Actualizar los datos del paciente con la dirección correcta
+    UPDATE Paciente 
+    SET 
+        Nombre = nombre_param,
+        Apellidos = apellidos_param,
+        Telefono = telefono_param,
+        Fecha_nacimiento = fecha_nacimiento_param,
+        Id_direccion = id_direccion_existente,
+        Email = email_param,
+        PIN = pin_param
+    WHERE Id_paciente = id_paciente_param;
+    
+END $$
 
 DELIMITER ;

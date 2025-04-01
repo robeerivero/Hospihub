@@ -3,7 +3,7 @@ include('../conexion.php');
 $conexion = conexion();
 
 // Llamar al procedimiento almacenado para obtener los pacientes
-$sql = "CALL Obtener_Pacientes_Cursor()";
+$sql = "CALL Obtener_Pacientes_Cursor(NULL)";
 $result = mysqli_query($conexion, $sql);
 
 ?>
@@ -54,6 +54,11 @@ $result = mysqli_query($conexion, $sql);
                     <td><?php echo htmlspecialchars($row['Calle']); ?></td>
                     <td><?php echo htmlspecialchars($row['Email']); ?></td>
                     <td><?php echo htmlspecialchars($row['PIN']); ?></td>
+                    <td>
+                        <a href="../editar/editar-paciente.php?id=<?php echo $row['Id_paciente']; ?>">
+                            <button>Editar</button>
+                        </a>
+                    </td>
                 </tr>
             <?php } ?>
         </tbody>

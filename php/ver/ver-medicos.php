@@ -62,6 +62,11 @@ $result = mysqli_query($conexion, $sql);
                     <td><?php echo htmlspecialchars($row['Nombre_departamento']); ?></td>
                     <td><?php echo htmlspecialchars($row['Id_departamento']); ?></td>
                     <td><?php echo htmlspecialchars($row['Nombre_hospital']); ?></td>
+                    <td>
+                        <a href="../editar/editar-medico.php?id=<?php echo $row['Id_medico']; ?>">
+                            <button>Editar</button>
+                        </a>
+                    </td>
                 </tr>
             <?php } ?>
         </tbody>

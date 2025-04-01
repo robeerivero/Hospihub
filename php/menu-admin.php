@@ -144,7 +144,7 @@
             </span>
         </h2>
 
-        <a href=".." id="volver">Volver al inicio <span class="material-symbols-outlined">
+        <a href="../hospihub" id="volver">Volver al inicio <span class="material-symbols-outlined">
             home
             </span>
         </a>
