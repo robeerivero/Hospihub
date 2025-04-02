@@ -25,7 +25,7 @@
         $ciudad = $_POST["ciudad"];
         $calle = $_POST["calle"];
         $email = $_POST["email"];
-        $pin = $_POST["pin"];
+        $pin =  password_hash($_POST["pin"], PASSWORD_BCRYPT);
 
         // Activar excepciones en MySQLi
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
@@ -66,6 +66,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+<script src="//cdn.conveythis.com/javascript/conveythis.js?api_key=pub_450bff64f17d3b1a1a1efac21fe1cfa8"></script>
+
     <title>HospiHub - Registrarse como paciente</title>  
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
@@ -108,7 +110,7 @@
             <input type="text" id="email" name="email" required>
             <br><br>
             <label for="pin">Pin</label><br>
-            <input type="number" id="pin" name="pin" required>
+            <input type="password" id="pin" name="pin" required>
             <br><br>
             <button type="submit">Registrarse</button>
         </form>

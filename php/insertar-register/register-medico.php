@@ -25,7 +25,7 @@
         $ciudad = $_POST["ciudad"];
         $calle = $_POST["calle"];
         $email = $_POST["email"];
-        $pin = $_POST["pin"];
+        $pin = password_hash($_POST["pin"], PASSWORD_BCRYPT);
         $hospital = $_POST["hospital"];
         $departamento = $_POST["departamento"];
 
@@ -68,6 +68,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+<script src="//cdn.conveythis.com/javascript/conveythis.js?api_key=pub_450bff64f17d3b1a1a1efac21fe1cfa8"></script>
+
     <title>HospiHub - Registrarse como médico</title>  
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
@@ -110,7 +112,7 @@
             <input type="text" id="email" name="email" required>
             <br><br>
             <label for="pin">Pin</label><br>
-            <input type="number" id="pin" name="pin" required>
+            <input type="password" id="pin" name="pin" required>
             <br><br>
             <label for="hospital">Hospital</label><br>
             <input type="text" id="hospital" name="hospital" required>

@@ -25,6 +25,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+<script src="//cdn.conveythis.com/javascript/conveythis.js?api_key=pub_450bff64f17d3b1a1a1efac21fe1cfa8"></script>
+
     <title>HospiHub - Eliminar Paciente</title>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">

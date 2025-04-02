@@ -16,6 +16,8 @@ $email = $_SESSION['email'];
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<script src="//cdn.conveythis.com/javascript/conveythis.js?api_key=pub_450bff64f17d3b1a1a1efac21fe1cfa8"></script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>HospiHub - Citas Pendientes</title>
