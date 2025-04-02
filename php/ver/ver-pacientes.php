@@ -40,6 +40,7 @@ $result = mysqli_query($conexion, $sql);
                 <th>Calle</th>
                 <th>Email</th>
                 <th>PIN</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>

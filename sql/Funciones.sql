@@ -359,11 +359,14 @@ END$$
 
 DELIMITER ;
 
-DELIMITER //
-CREATE PROCEDURE Crear_Citas()
+DELIMITER $$
+
+CREATE PROCEDURE `Crear_Citas`()
 BEGIN
-    DECLARE v_fecha DATE;
-    DECLARE v_hora DATETIME;
+    DECLARE v_fecha_inicio DATE;
+    DECLARE v_fecha_fin DATE;
+    DECLARE v_fecha_actual DATE;
+    DECLARE v_hora TIME;
     DECLARE v_estado VARCHAR(50) DEFAULT 'Paciente sin asignar';
     DECLARE v_citas_existen INT;
     
@@ -372,64 +375,80 @@ BEGIN
     DECLARE dept_id INT;
     DECLARE medico_id INT;
 
-    -- Cursores con nombres de tablas corregidos
+    -- Cursores para hospitales, departamentos y médicos
     DECLARE cur_hospital CURSOR FOR SELECT Id_hospital FROM Hospital;
     DECLARE cur_dept CURSOR FOR SELECT Id_departamento FROM Departamento WHERE Id_hospital = hospital_id;
     DECLARE cur_medico CURSOR FOR SELECT Id_medico FROM Medico WHERE Id_departamento = dept_id;
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
-    SET v_fecha = CURDATE();
+    -- Configurar rango de fechas (1 año desde hoy)
+    SET v_fecha_inicio = CURDATE();
+    SET v_fecha_fin = DATE_ADD(v_fecha_inicio, INTERVAL 1 YEAR);
+    SET v_fecha_actual = v_fecha_inicio;
 
-    -- Verificar citas existentes con nombre de tabla corregido
-    SELECT COUNT(*) INTO v_citas_existen FROM Cita WHERE Fecha = v_fecha;
-    IF v_citas_existen > 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Ya existen citas para la fecha actual.';
-    END IF;
+    -- Crear citas para cada día del año
+    WHILE v_fecha_actual <= v_fecha_fin DO
+        -- Solo días laborables (de lunes a viernes)
+        IF DAYOFWEEK(v_fecha_actual) BETWEEN 2 AND 6 THEN
+            -- Verificar si ya existen citas para esta fecha
+            SELECT COUNT(*) INTO v_citas_existen FROM Cita WHERE Fecha = v_fecha_actual;
+            
+            IF v_citas_existen = 0 THEN
+                -- Reiniciar cursores para cada fecha
+                SET done = FALSE;
+                
+                OPEN cur_hospital;
+                hospital_loop: LOOP
+                    FETCH cur_hospital INTO hospital_id;
+                    IF done THEN LEAVE hospital_loop; END IF;
 
-    OPEN cur_hospital;
-    hospital_loop: LOOP
-        FETCH cur_hospital INTO hospital_id;
-        IF done THEN LEAVE hospital_loop; END IF;
+                    OPEN cur_dept;
+                    dept_loop: LOOP
+                        FETCH cur_dept INTO dept_id;
+                        IF done THEN LEAVE dept_loop; END IF;
 
-        OPEN cur_dept;
-        dept_loop: LOOP
-            FETCH cur_dept INTO dept_id;
-            IF done THEN LEAVE dept_loop; END IF;
+                        OPEN cur_medico;
+                        medico_loop: LOOP
+                            FETCH cur_medico INTO medico_id;
+                            IF done THEN LEAVE medico_loop; END IF;
 
-            OPEN cur_medico;
-            medico_loop: LOOP
-                FETCH cur_medico INTO medico_id;
-                IF done THEN LEAVE medico_loop; END IF;
+                            -- Crear citas cada hora desde las 8:00 hasta las 13:00
+                            SET v_hora = TIME('08:00:00');
+                            
+                            WHILE v_hora <= TIME('13:00:00') DO
+                                INSERT INTO Cita (
+                                    Id_medico, 
+                                    Fecha, 
+                                    Hora, 
+                                    Estado
+                                ) VALUES (
+                                    medico_id, 
+                                    v_fecha_actual, 
+                                    CONCAT(v_fecha_actual, ' ', v_hora), 
+                                    v_estado
+                                );
 
-                SET v_hora = CONCAT(v_fecha, ' 08:00:00');
+                                SET v_hora = ADDTIME(v_hora, '01:00:00');
+                            END WHILE;
 
-                WHILE HOUR(v_hora) < 14 DO
-                    INSERT INTO Cita (  -- Nombre de tabla corregido
-                        Id_medico, 
-                        Fecha, 
-                        Hora, 
-                        Estado
-                    ) VALUES (
-                        medico_id, 
-                        v_fecha, 
-                        v_hora, 
-                        v_estado
-                    );
+                        END LOOP;
+                        CLOSE cur_medico;
+                        SET done = FALSE;
+                    END LOOP;
+                    CLOSE cur_dept;
+                    SET done = FALSE;
+                END LOOP;
+                CLOSE cur_hospital;
+            END IF;
+        END IF;
+        
+        SET v_fecha_actual = DATE_ADD(v_fecha_actual, INTERVAL 1 DAY);
+    END WHILE;
+    
+    SELECT CONCAT('Citas creadas desde ', v_fecha_inicio, ' hasta ', v_fecha_fin) AS Resultado;
+END$$
 
-                    SET v_hora = ADDTIME(v_hora, '01:00:00');
-                END WHILE;
-
-            END LOOP;
-            CLOSE cur_medico;
-            SET done = FALSE;  -- Reset para próximo cursor
-        END LOOP;
-        CLOSE cur_dept;
-        SET done = FALSE;  -- Reset para próximo cursor
-    END LOOP;
-    CLOSE cur_hospital;
-END //
 DELIMITER ;
 
 
@@ -489,23 +508,47 @@ DELIMITER ;
 -- -------------------------------
 -- OBTENER DEPARTAMENTOS HOSPITALES
 -- -------------------------------
-DELIMITER //
-CREATE PROCEDURE Obtener_Departamentos_Hospitales_Cursor()
+DELIMITER $$
+
+CREATE PROCEDURE Obtener_Departamentos_Hospitales_Cursor(
+    IN id_departamento_param INT
+)
 BEGIN
-    SELECT 
-        d.Id_departamento,
-        d.Nombre AS Nombre_departamento,
-        d.Ubicacion AS Ubicacion_departamento,
-        h.Id_hospital,
-        h.Nombre AS Nombre_hospital,
-        dir.Ciudad AS Ciudad_hospital,  -- Desde Direccion
-        dir.Calle AS Calle_hospital     -- Desde Direccion
-    FROM 
-        Departamento d
-        JOIN Hospital h ON d.Id_hospital = h.Id_hospital
-        JOIN Direccion dir ON h.Id_direccion = dir.Id_direccion;  -- JOIN añadido
-END //
+    IF id_departamento_param IS NULL OR id_departamento_param = 0 THEN
+        -- Si no se proporciona un ID, devolver todos los departamentos
+        SELECT 
+            d.Id_departamento,
+            d.Nombre AS Nombre_departamento,
+            d.Ubicacion AS Ubicacion_departamento,
+            h.Id_hospital,
+            h.Nombre AS Nombre_hospital,
+            dir.Ciudad AS Ciudad_hospital,  
+            dir.Calle AS Calle_hospital     
+        FROM 
+            Departamento d
+            JOIN Hospital h ON d.Id_hospital = h.Id_hospital
+            JOIN Direccion dir ON h.Id_direccion = dir.Id_direccion;
+    ELSE
+        -- Si se proporciona un ID, devolver solo ese departamento
+        SELECT 
+            d.Id_departamento,
+            d.Nombre AS Nombre_departamento,
+            d.Ubicacion AS Ubicacion_departamento,
+            h.Id_hospital,
+            h.Nombre AS Nombre_hospital,
+            dir.Ciudad AS Ciudad_hospital,  
+            dir.Calle AS Calle_hospital     
+        FROM 
+            Departamento d
+            JOIN Hospital h ON d.Id_hospital = h.Id_hospital
+            JOIN Direccion dir ON h.Id_direccion = dir.Id_direccion
+        WHERE 
+            d.Id_departamento = id_departamento_param;
+    END IF;
+END$$
+
 DELIMITER ;
+
 
 -- -------------------------------
 -- OBTENER HOSPITALES
@@ -527,30 +570,61 @@ DELIMITER ;
 -- -------------------------------
 -- OBTENER MEDICOS
 -- -------------------------------
-DELIMITER //
-CREATE PROCEDURE Obtener_Medicos_Cursor()
+DELIMITER $$
+
+CREATE PROCEDURE Obtener_Medicos_Cursor(
+    IN id_medico_param INT
+)
 BEGIN
-    SELECT 
-        m.Id_medico,
-        m.Nombre,
-        m.Apellidos,
-        m.Telefono,
-        m.Fecha_nacimiento,
-        dir.Ciudad,  -- Desde Direccion
-        dir.Calle,   -- Desde Direccion
-        m.Email,
-        m.PIN,
-        d.Id_departamento,
-        d.Nombre AS Nombre_departamento,
-        h.Id_hospital,
-        h.Nombre AS Nombre_hospital
-    FROM 
-        Medico m
-        JOIN Direccion dir ON m.Id_direccion = dir.Id_direccion  -- JOIN añadido
-        JOIN Departamento d ON m.Id_departamento = d.Id_departamento
-        JOIN Hospital h ON d.Id_hospital = h.Id_hospital;
-END //
+    IF id_medico_param IS NULL OR id_medico_param = 0 THEN
+        -- Si no se proporciona un ID, devuelve todos los médicos
+        SELECT 
+            m.Id_medico,
+            m.Nombre,
+            m.Apellidos,
+            m.Telefono,
+            m.Fecha_nacimiento,
+            dir.Ciudad,  
+            dir.Calle,   
+            m.Email,
+            m.PIN,
+            d.Id_departamento,
+            d.Nombre AS Nombre_departamento,
+            h.Id_hospital,
+            h.Nombre AS Nombre_hospital
+        FROM 
+            Medico m
+            JOIN Direccion dir ON m.Id_direccion = dir.Id_direccion  
+            JOIN Departamento d ON m.Id_departamento = d.Id_departamento
+            JOIN Hospital h ON d.Id_hospital = h.Id_hospital;
+    ELSE
+        -- Si se proporciona un ID, devuelve solo ese médico
+        SELECT 
+            m.Id_medico,
+            m.Nombre,
+            m.Apellidos,
+            m.Telefono,
+            m.Fecha_nacimiento,
+            dir.Ciudad,  
+            dir.Calle,   
+            m.Email,
+            m.PIN,
+            d.Id_departamento,
+            d.Nombre AS Nombre_departamento,
+            h.Id_hospital,
+            h.Nombre AS Nombre_hospital
+        FROM 
+            Medico m
+            JOIN Direccion dir ON m.Id_direccion = dir.Id_direccion  
+            JOIN Departamento d ON m.Id_departamento = d.Id_departamento
+            JOIN Hospital h ON d.Id_hospital = h.Id_hospital
+        WHERE 
+            m.Id_medico = id_medico_param;
+    END IF;
+END $$
+
 DELIMITER ;
+
 
 -- -------------------------------
 -- OBTENER PACIENTES
@@ -756,3 +830,117 @@ END $$
 
 DELIMITER ;
 
+
+-- -------------------------------
+-- Editar médico
+-- -------------------------------
+
+DELIMITER $$
+
+CREATE PROCEDURE Editar_Medico(
+    IN id_medico_param INT,
+    IN nombre_param VARCHAR(100),
+    IN apellidos_param VARCHAR(100),
+    IN telefono_param VARCHAR(20),
+    IN fecha_nacimiento_param DATE,
+    IN ciudad_param VARCHAR(100),
+    IN calle_param VARCHAR(100),
+    IN email_param VARCHAR(255),
+    IN pin_param VARCHAR(50),
+    IN departamento_param VARCHAR(100),
+    IN hospital_param VARCHAR(100)
+)
+BEGIN
+    DECLARE id_direccion_existente INT;
+    DECLARE id_departamento_existente INT;
+    DECLARE id_hospital_existente INT;
+
+    -- Verificar si la dirección ya existe
+    SELECT Id_direccion INTO id_direccion_existente
+    FROM Direccion
+    WHERE Ciudad = ciudad_param AND Calle = calle_param
+    LIMIT 1;
+
+    -- Si no existe, insertamos una nueva dirección
+    IF id_direccion_existente IS NULL THEN
+        INSERT INTO Direccion (Ciudad, Calle)
+        VALUES (ciudad_param, calle_param);
+        
+        -- Obtener el ID de la nueva dirección
+        SET id_direccion_existente = LAST_INSERT_ID();
+    END IF;
+
+    -- Verificar si el hospital existe
+    SELECT Id_hospital INTO id_hospital_existente
+    FROM Hospital
+    WHERE Nombre = hospital_param
+    LIMIT 1;
+
+    IF id_hospital_existente IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El hospital no existe.';
+    END IF;
+
+    -- Verificar si el departamento existe y pertenece al hospital correspondiente
+    SELECT Id_departamento INTO id_departamento_existente
+    FROM Departamento
+    WHERE Nombre = departamento_param AND Id_hospital = id_hospital_existente
+    LIMIT 1;
+
+    IF id_departamento_existente IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'El departamento no existe o no corresponde al hospital especificado.';
+    END IF;
+
+    -- Actualizar los datos del médico con la dirección correcta y el departamento correspondiente
+    UPDATE Medico 
+    SET 
+        Nombre = nombre_param,
+        Apellidos = apellidos_param,
+        Telefono = telefono_param,
+        Fecha_nacimiento = fecha_nacimiento_param,
+        Id_direccion = id_direccion_existente,
+        Email = email_param,
+        PIN = pin_param,
+        Id_departamento = id_departamento_existente
+    WHERE Id_medico = id_medico_param;
+END $$
+
+DELIMITER ;
+
+
+-- -------------------------------
+-- Editar departamento
+-- -------------------------------
+
+DELIMITER $$
+
+CREATE PROCEDURE Editar_Departamento(
+    IN p_id_departamento INT,
+    IN p_nombre_hospital VARCHAR(255),
+    IN p_nombre_departamento VARCHAR(255),
+    IN p_ubicacion VARCHAR(255)
+)
+BEGIN
+    DECLARE v_id_hospital INT;
+
+    -- Verificar si el hospital existe en la base de datos
+    SELECT Id_hospital INTO v_id_hospital
+    FROM Hospital
+    WHERE Nombre = p_nombre_hospital
+    LIMIT 1;
+
+    -- Si el hospital no existe, lanzar un error
+    IF v_id_hospital IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Hospital no encontrado';
+    END IF;
+
+    -- Actualizar los datos del departamento si el hospital existe
+    UPDATE Departamento
+    SET
+        nombre = p_nombre_departamento,  -- Asegúrate de que 'nombre' sea el nombre correcto de la columna en tu tabla
+        ubicacion = p_ubicacion,         -- Asegúrate de que 'ubicacion' sea el nombre correcto de la columna en tu tabla
+        Id_hospital = v_id_hospital
+    WHERE Id_departamento = p_id_departamento;
+
+END$$
+
+DELIMITER ;
