@@ -359,11 +359,14 @@ END$$
 
 DELIMITER ;
 
-DELIMITER //
-CREATE PROCEDURE Crear_Citas()
+DELIMITER $$
+
+CREATE PROCEDURE `Crear_Citas`()
 BEGIN
-    DECLARE v_fecha DATE;
-    DECLARE v_hora DATETIME;
+    DECLARE v_fecha_inicio DATE;
+    DECLARE v_fecha_fin DATE;
+    DECLARE v_fecha_actual DATE;
+    DECLARE v_hora TIME;
     DECLARE v_estado VARCHAR(50) DEFAULT 'Paciente sin asignar';
     DECLARE v_citas_existen INT;
     
@@ -372,64 +375,80 @@ BEGIN
     DECLARE dept_id INT;
     DECLARE medico_id INT;
 
-    -- Cursores con nombres de tablas corregidos
+    -- Cursores para hospitales, departamentos y médicos
     DECLARE cur_hospital CURSOR FOR SELECT Id_hospital FROM Hospital;
     DECLARE cur_dept CURSOR FOR SELECT Id_departamento FROM Departamento WHERE Id_hospital = hospital_id;
     DECLARE cur_medico CURSOR FOR SELECT Id_medico FROM Medico WHERE Id_departamento = dept_id;
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
-    SET v_fecha = CURDATE();
+    -- Configurar rango de fechas (1 año desde hoy)
+    SET v_fecha_inicio = CURDATE();
+    SET v_fecha_fin = DATE_ADD(v_fecha_inicio, INTERVAL 1 YEAR);
+    SET v_fecha_actual = v_fecha_inicio;
 
-    -- Verificar citas existentes con nombre de tabla corregido
-    SELECT COUNT(*) INTO v_citas_existen FROM Cita WHERE Fecha = v_fecha;
-    IF v_citas_existen > 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Ya existen citas para la fecha actual.';
-    END IF;
+    -- Crear citas para cada día del año
+    WHILE v_fecha_actual <= v_fecha_fin DO
+        -- Solo días laborables (de lunes a viernes)
+        IF DAYOFWEEK(v_fecha_actual) BETWEEN 2 AND 6 THEN
+            -- Verificar si ya existen citas para esta fecha
+            SELECT COUNT(*) INTO v_citas_existen FROM Cita WHERE Fecha = v_fecha_actual;
+            
+            IF v_citas_existen = 0 THEN
+                -- Reiniciar cursores para cada fecha
+                SET done = FALSE;
+                
+                OPEN cur_hospital;
+                hospital_loop: LOOP
+                    FETCH cur_hospital INTO hospital_id;
+                    IF done THEN LEAVE hospital_loop; END IF;
 
-    OPEN cur_hospital;
-    hospital_loop: LOOP
-        FETCH cur_hospital INTO hospital_id;
-        IF done THEN LEAVE hospital_loop; END IF;
+                    OPEN cur_dept;
+                    dept_loop: LOOP
+                        FETCH cur_dept INTO dept_id;
+                        IF done THEN LEAVE dept_loop; END IF;
 
-        OPEN cur_dept;
-        dept_loop: LOOP
-            FETCH cur_dept INTO dept_id;
-            IF done THEN LEAVE dept_loop; END IF;
+                        OPEN cur_medico;
+                        medico_loop: LOOP
+                            FETCH cur_medico INTO medico_id;
+                            IF done THEN LEAVE medico_loop; END IF;
 
-            OPEN cur_medico;
-            medico_loop: LOOP
-                FETCH cur_medico INTO medico_id;
-                IF done THEN LEAVE medico_loop; END IF;
+                            -- Crear citas cada hora desde las 8:00 hasta las 13:00
+                            SET v_hora = TIME('08:00:00');
+                            
+                            WHILE v_hora <= TIME('13:00:00') DO
+                                INSERT INTO Cita (
+                                    Id_medico, 
+                                    Fecha, 
+                                    Hora, 
+                                    Estado
+                                ) VALUES (
+                                    medico_id, 
+                                    v_fecha_actual, 
+                                    CONCAT(v_fecha_actual, ' ', v_hora), 
+                                    v_estado
+                                );
 
-                SET v_hora = CONCAT(v_fecha, ' 08:00:00');
+                                SET v_hora = ADDTIME(v_hora, '01:00:00');
+                            END WHILE;
 
-                WHILE HOUR(v_hora) < 14 DO
-                    INSERT INTO Cita (  -- Nombre de tabla corregido
-                        Id_medico, 
-                        Fecha, 
-                        Hora, 
-                        Estado
-                    ) VALUES (
-                        medico_id, 
-                        v_fecha, 
-                        v_hora, 
-                        v_estado
-                    );
+                        END LOOP;
+                        CLOSE cur_medico;
+                        SET done = FALSE;
+                    END LOOP;
+                    CLOSE cur_dept;
+                    SET done = FALSE;
+                END LOOP;
+                CLOSE cur_hospital;
+            END IF;
+        END IF;
+        
+        SET v_fecha_actual = DATE_ADD(v_fecha_actual, INTERVAL 1 DAY);
+    END WHILE;
+    
+    SELECT CONCAT('Citas creadas desde ', v_fecha_inicio, ' hasta ', v_fecha_fin) AS Resultado;
+END$$
 
-                    SET v_hora = ADDTIME(v_hora, '01:00:00');
-                END WHILE;
-
-            END LOOP;
-            CLOSE cur_medico;
-            SET done = FALSE;  -- Reset para próximo cursor
-        END LOOP;
-        CLOSE cur_dept;
-        SET done = FALSE;  -- Reset para próximo cursor
-    END LOOP;
-    CLOSE cur_hospital;
-END //
 DELIMITER ;
 
 

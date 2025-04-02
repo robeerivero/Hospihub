@@ -13,6 +13,28 @@
     <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="../css/ver.css">
+    <style>
+        .success-message {
+            color: #4CAF50;
+            text-align: center;
+            font-size: 1.5em;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 5px solid #4CAF50;
+        }
+        .error-message {
+            color: #f44336;
+            text-align: center;
+            font-size: 1.5em;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 5px solid #f44336;
+        }
+    </style>
 </head>
 <body>
 
@@ -21,25 +43,35 @@
 </nav>
 
 <div id="contenedor">
-    <h1>Cancelar todas las citas</h1>
+    <h1>Crear todas las citas anuales</h1>
     <?php
-    // Establecer la conexión a la base de datos con MySQLi
+    session_start();
+    
     include('../conexion.php');
-    $conexion = new mysqli($host, $usuario, $password, $base_de_datos);
+    $conexion = conexion();
 
     // Verificar si la conexión fue exitosa
     if ($conexion->connect_error) {
         die("Conexión fallida: " . $conexion->connect_error);
     }
 
-    // Ejecutar la consulta para crear citas
-    $query = "CALL Crear_Citas()";  // Suponiendo que Crear_Citas es un procedimiento almacenado
-    if ($conexion->query($query) === TRUE) {
-        echo "<br><br><hr style='border-top: 3px solid orange; border-bottom: 3px solid orange;'>
-              <p style='color:orange; text-align:center; font-size: 1.5em;'>Se han creado citas para todos los médicos.</p>
-              <hr style='border-top: 3px solid orange; border-bottom: 3px solid orange;'>";
+    // Ejecutar el procedimiento almacenado
+    if ($conexion->multi_query("CALL Crear_Citas()")) {
+        // Obtener todos los resultados
+        do {
+            if ($result = $conexion->store_result()) {
+                while ($row = $result->fetch_assoc()) {
+                    if (isset($row['Resultado'])) {
+                        echo "<div class='success-message'>" . htmlspecialchars($row['Resultado']) . "</div>";
+                    } elseif (isset($row['mensaje_error'])) {
+                        echo "<div class='error-message'>" . htmlspecialchars($row['mensaje_error']) . "</div>";
+                    }
+                }
+                $result->free();
+            }
+        } while ($conexion->more_results() && $conexion->next_result());
     } else {
-        echo "Error al crear las citas: " . $conexion->error;
+        echo "<div class='error-message'>Error al crear las citas: " . htmlspecialchars($conexion->error) . "</div>";
     }
 
     // Cerrar la conexión
