@@ -135,6 +135,6 @@ mysqli_close($conexion);
     
     <a href="../menu-admin.php">Regresar al menú del administrador <span class="material-symbols-outlined">arrow_left_alt</span></a> <br>
     <br>
-    <a href="ver-medicos.php" id="volver">Volver a la lista de médicos <span class="material-symbols-outlined">list</span></a>
+    <a href="../ver/ver-medicos.php" id="volver">Volver a la lista de médicos <span class="material-symbols-outlined">list</span></a>
 </body>
 </html>

@@ -50,13 +50,9 @@ mysqli_close($conexion);
 <!DOCTYPE html>
 <html>
 <head>
-<<<<<<< HEAD
-<script src="//cdn.conveythis.com/javascript/conveythis.js?api_key=pub_450bff64f17d3b1a1a1efac21fe1cfa8"></script>
 
-    <title>HospiHub - Editar Paciente</title>  
-=======
+    <script src="//cdn.conveythis.com/javascript/conveythis.js?api_key=pub_450bff64f17d3b1a1a1efac21fe1cfa8"></script>
     <title>HospiHub - Editar Departamento</title>  
->>>>>>> c993bab7cfec3bf1b63c42c52ae360c76ac24f70
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;900&display=swap">
@@ -93,6 +89,6 @@ mysqli_close($conexion);
     
     <a href="../menu-admin.php">Regresar al menú del administrador <span class="material-symbols-outlined">arrow_left_alt</span></a> <br>
     <br>
-    <a href="ver-departamentos.php" id="volver">Volver a la lista de departamentos <span class="material-symbols-outlined">list</span></a>
+    <a href="../ver/ver-departamentos.php" id="volver">Volver a la lista de departamentos <span class="material-symbols-outlined">list</span></a>
 </body>
 </html>

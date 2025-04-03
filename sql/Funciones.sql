@@ -553,19 +553,39 @@ DELIMITER ;
 -- -------------------------------
 -- OBTENER HOSPITALES
 -- -------------------------------
-DELIMITER //
-CREATE PROCEDURE Obtener_Hospitales_Cursor()
+DELIMITER $$
+
+CREATE PROCEDURE Obtener_Hospitales_Cursor(
+    IN p_Id_hospital INT
+)
 BEGIN
-    SELECT 
-        h.Id_hospital,
-        h.Nombre AS Nombre_hospital,
-        dir.Ciudad AS Ciudad_hospital,  -- Desde Direccion
-        dir.Calle AS Calle_hospital      -- Desde Direccion
-    FROM 
-        Hospital h
-        JOIN Direccion dir ON h.Id_direccion = dir.Id_direccion;  -- JOIN añadido
-END //
+    IF p_Id_hospital IS NULL OR p_Id_hospital = 0 THEN
+        -- Si no se recibe un ID o es 0, devuelve todos los hospitales
+        SELECT 
+            h.Id_hospital,
+            h.Nombre AS Nombre_hospital,
+            dir.Ciudad AS Ciudad_hospital,
+            dir.Calle AS Calle_hospital
+        FROM 
+            Hospital h
+            JOIN Direccion dir ON h.Id_direccion = dir.Id_direccion;
+    ELSE
+        -- Si se recibe un ID válido, devuelve solo ese hospital
+        SELECT 
+            h.Id_hospital,
+            h.Nombre AS Nombre_hospital,
+            dir.Ciudad AS Ciudad_hospital,
+            dir.Calle AS Calle_hospital
+        FROM 
+            Hospital h
+            JOIN Direccion dir ON h.Id_direccion = dir.Id_direccion
+        WHERE 
+            h.Id_hospital = p_Id_hospital;
+    END IF;
+END$$
+
 DELIMITER ;
+
 
 -- -------------------------------
 -- OBTENER MEDICOS
@@ -941,6 +961,41 @@ BEGIN
         Id_hospital = v_id_hospital
     WHERE Id_departamento = p_id_departamento;
 
+END$$
+
+DELIMITER ;
+
+-- -------------------------------
+-- Editar hospital
+-- -------------------------------
+
+DELIMITER $$
+
+CREATE PROCEDURE Editar_Hospital(
+    IN p_Id_hospital INT,
+    IN p_Nombre VARCHAR(255),
+    IN p_Ciudad VARCHAR(255),
+    IN p_Calle VARCHAR(255)
+)
+BEGIN
+    DECLARE v_Id_direccion INT;
+    
+    -- Verificar si la dirección ya existe
+    SELECT Id_direccion INTO v_Id_direccion 
+    FROM direccion 
+    WHERE Ciudad = p_Ciudad AND Calle = p_Calle
+    LIMIT 1;
+    
+    -- Si no existe, insertar nueva dirección
+    IF v_Id_direccion IS NULL THEN
+        INSERT INTO direccion (Ciudad, Calle) VALUES (p_Ciudad, p_Calle);
+        SET v_Id_direccion = LAST_INSERT_ID();
+    END IF;
+    
+    -- Actualizar el hospital con el nuevo nombre y la dirección
+    UPDATE hospital 
+    SET Nombre = p_Nombre, Id_direccion = v_Id_direccion
+    WHERE Id_hospital = p_Id_hospital;
 END$$
 
 DELIMITER ;
