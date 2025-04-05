@@ -1,36 +1,34 @@
+<?php
+session_start();
+include('../conexion.php');
+$conexion = conexion();
+
+// Verificar si el paciente ha iniciado sesión
+if (!isset($_SESSION['id_paciente'])) {
+    header("Location: ../login/login-paciente.php");
+    exit();
+}
+
+// Obtener el ID de la cita de la URL
+if (!isset($_GET['id_cita'])) {
+    die("Error: No se ha especificado una cita");
+}
+$id_cita = $_GET['id_cita'];
+?>
+
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Detalles de la Cita</title>
+    <title>HospiHub - Detalles de la Cita</title>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
-    <!-- Metadatos del autor y diseñador del sitio -->
     <meta name="author" content="Roberto Rivero Díaz, Jesus Gallego Ibañez, David Conde Salado">
     <meta name="designer" content="Roberto Rivero Díaz, Jesus Gallego Ibañez, David Conde Salado">
-    <!-- Enlaces a las fuentes de Google y hojas de estilos -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <!-- Enlaces a los archivos CSS -->
-    <link rel="stylesheet" href="../css/ver.css">
-    <style>
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        
-        th, td {
-            border: 1px solid #dddddd;
-            text-align: left;
-            padding: 8px;
-        }
-        
-        th {
-            background-color: #f2f2f2;
-        }
-    </style>
+    <link rel="stylesheet" href="../css/ver-detalles-cita.css">
 </head>
 <body>
 
@@ -42,76 +40,132 @@
     <h1>Detalles de la Cita</h1>
 
     <?php
-    include('../conexion.php');
-    $conexion = conexion();
+    
+    // 1. Primero obtenemos la información básica de la cita
+    $query_cita = "SELECT 
+                    c.Fecha, 
+                    DATE_FORMAT(c.Hora, '%H:%i') AS Hora,
+                    m.Nombre AS Nombre_Medico, 
+                    m.Apellidos AS Apellidos_Medico,
+                    d.Nombre AS Departamento,
+                    h.Nombre AS Hospital
+                  FROM Cita c
+                  JOIN Medico m ON c.Id_medico = m.Id_medico
+                  JOIN Departamento d ON m.Id_departamento = d.Id_departamento
+                  JOIN Hospital h ON d.Id_hospital = h.Id_hospital
+                  WHERE c.Id_cita = ?";
+    
+    $stmt_cita = $conexion->prepare($query_cita);
+    $stmt_cita->bind_param("i", $id_cita);
+    $stmt_cita->execute();
+    $result_cita = $stmt_cita->get_result();
 
-    // Obtener el ID de la cita de la URL
-    $id_cita = $_GET['id_cita'];
+    if ($row_cita = $result_cita->fetch_assoc()) {
+        echo '<div class="info-cita">';
+        echo '<h2>Información de la cita</h2>';
+        echo '<p><strong>Fecha:</strong> ' . htmlspecialchars($row_cita['Fecha']) . '</p>';
+        echo '<p><strong>Hora:</strong> ' . htmlspecialchars($row_cita['Hora']) . '</p>';
+        echo '<p><strong>Médico:</strong> ' . htmlspecialchars($row_cita['Nombre_Medico']) . ' ' . htmlspecialchars($row_cita['Apellidos_Medico']) . '</p>';
+        echo '<p><strong>Departamento:</strong> ' . htmlspecialchars($row_cita['Departamento']) . '</p>';
+        echo '<p><strong>Hospital:</strong> ' . htmlspecialchars($row_cita['Hospital']) . '</p>';
+        echo '</div>';
+    }
 
-    // Consulta para diagnóstico
+    // 2. Obtenemos el diagnóstico asociado a la cita
     $query_diagnostico = "SELECT 
-                            d.Descripcion AS descripcion,
-                            d.Recomendacion AS recomendacion
-                          FROM Tabla_Cita c
-                          JOIN Tabla_Diagnostico d ON c.Id_diagnostico = d.Id_diagnostico
-                          WHERE c.Id_Cita = ?";
+                            diag.Descripcion, 
+                            diag.Recomendacion
+                          FROM Cita c
+                          JOIN Diagnostico diag ON c.Id_diagnostico = diag.Id_diagnostico
+                          WHERE c.Id_cita = ?";
     
-    $stmt_diagnostico = mysqli_prepare($conexion, $query_diagnostico);
-    mysqli_stmt_bind_param($stmt_diagnostico, "i", $id_cita);
-    mysqli_stmt_execute($stmt_diagnostico);
-    $result_diagnostico = mysqli_stmt_get_result($stmt_diagnostico);
+    $stmt_diagnostico = $conexion->prepare($query_diagnostico);
+    $stmt_diagnostico->bind_param("i", $id_cita);
+    $stmt_diagnostico->execute();
+    $result_diagnostico = $stmt_diagnostico->get_result();
 
-    echo "<h2>Diagnóstico:</h2>";
-    echo "<ul>";
-    while ($row = mysqli_fetch_assoc($result_diagnostico)) {
-        echo "<li><strong>Descripción:</strong> " . htmlspecialchars($row['descripcion']) . "</li>";
-        echo "<li><strong>Recomendación:</strong> " . htmlspecialchars($row['recomendacion']) . "</li>";
+    if ($row_diagnostico = $result_diagnostico->fetch_assoc()) {
+        echo '<div class="diagnostico-container">';
+        echo '<h2>Diagnóstico</h2>';
+        echo '<p><strong>Descripción:</strong><br>' . nl2br(htmlspecialchars($row_diagnostico['Descripcion'])) . '</p>';
+        echo '<p><strong>Recomendaciones:</strong><br>' . nl2br(htmlspecialchars($row_diagnostico['Recomendacion'])) . '</p>';
+        echo '</div>';
+    } else {
+        echo '<p>No se encontró diagnóstico para esta cita.</p>';
     }
-    echo "</ul>";
 
-    // Consulta para medicamentos
+    // 3. Obtenemos los medicamentos recetados
     $query_medicamentos = "SELECT 
-                             m.Nombre AS nombre,
-                             m.Frecuencia AS frecuencia
-                           FROM Tabla_Cita c
-                           JOIN Tabla_Diagnostico d ON c.Id_diagnostico = d.Id_diagnostico
-                           LEFT JOIN Tabla_Medicamento m ON d.Id_diagnostico = m.Id_diagnostico
-                           WHERE c.Id_Cita = ?";
+                            med.Nombre, 
+                            med.Frecuencia
+                          FROM Cita c
+                          JOIN Diagnostico diag ON c.Id_diagnostico = diag.Id_diagnostico
+                          JOIN Medicamento med ON diag.Id_diagnostico = med.Id_diagnostico
+                          WHERE c.Id_cita = ?";
     
-    $stmt_medicamentos = mysqli_prepare($conexion, $query_medicamentos);
-    mysqli_stmt_bind_param($stmt_medicamentos, "i", $id_cita);
-    mysqli_stmt_execute($stmt_medicamentos);
-    $result_medicamentos = mysqli_stmt_get_result($stmt_medicamentos);
+    $stmt_medicamentos = $conexion->prepare($query_medicamentos);
+    $stmt_medicamentos->bind_param("i", $id_cita);
+    $stmt_medicamentos->execute();
+    $result_medicamentos = $stmt_medicamentos->get_result();
 
-    echo "<h2>Medicamentos:</h2>";
-    echo "<table>";
-    echo "<tr><th>Nombre</th><th>Frecuencia</th></tr>";
-    while ($med_row = mysqli_fetch_assoc($result_medicamentos)) {
-        echo "<tr>";
-        echo "<td>" . htmlspecialchars($med_row['nombre']) . "</td>";
-        echo "<td>" . htmlspecialchars($med_row['frecuencia']) . "</td>";
-        echo "</tr>";
+    if ($result_medicamentos->num_rows > 0) {
+        echo '<h2>Medicamentos Recetados</h2>';
+        echo '<table class="medicamentos-table">';
+        echo '<tr><th>Nombre</th><th>Frecuencia de uso</th></tr>';
+        
+        while ($row_med = $result_medicamentos->fetch_assoc()) {
+            echo '<tr>';
+            echo '<td>' . htmlspecialchars($row_med['Nombre']) . '</td>';
+            echo '<td>' . htmlspecialchars($row_med['Frecuencia']) . '</td>';
+            echo '</tr>';
+        }
+        
+        echo '</table>';
+    } else {
+        echo '<p>No se recetaron medicamentos para esta cita.</p>';
     }
-    echo "</table>";
+    // Verificar si se solicitó generar PDF
+    if (isset($_GET['generar_pdf'])) {
+        require_once '../vendor/autoload.php'; // Asegúrate de que la ruta sea correcta
+        
+        // Crear instancia de dompdf
+        $dompdf = new Dompdf\Dompdf();
+        $dompdf->setPaper('A4', 'portrait');
+        
+        // Aquí capturamos el HTML que ya tienes para mostrarlo
+        ob_start();
+        include 'template-pdf-cita.php'; // Crearemos este archivo
+        $html = ob_get_clean();
+        
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+        
+        // Descargar el PDF
+        $dompdf->stream("detalles_cita_$id_cita.pdf", [
+            "Attachment" => true
+        ]);
+        exit();
+    }
 
-    // Liberar recursos
-    mysqli_free_result($result_diagnostico);
-    mysqli_free_result($result_medicamentos);
-    mysqli_stmt_close($stmt_diagnostico);
-    mysqli_stmt_close($stmt_medicamentos);
-    mysqli_close($conexion);
+    // Cerrar todas las conexiones
+    $stmt_cita->close();
+    $stmt_diagnostico->close();
+    $stmt_medicamentos->close();
+    $conexion->close();
     ?>
 
+    <div class="botones">
+        <a href="?id_cita=<?php echo $id_cita; ?>&generar_pdf=1" class="btn-pdf">
+            <span class="material-symbols-outlined">picture_as_pdf</span> Descargar PDF
+        </a>
+        <a href="ver-citas-paciente.php" class="btn-volver">
+            <span class="material-symbols-outlined">arrow_left_alt</span> Volver a las citas
+        </a>
+        <a href="../menu-paciente.php" class="btn-volver">
+            <span class="material-symbols-outlined">home</span> Volver al menú
+        </a>
+    </div>
 </div>
-
-<a href="ver-citas-paciente.php" id="volver">Volver a las citas <span class="material-symbols-outlined">
-        arrow_left_alt
-    </span></a>
-    <br><br>
-<a href="../menu-paciente.php" id="volver">Volver al menú de paciente <span class="material-symbols-outlined">
-    home
-    </span>
-</a>
 
 </body>
 </html>

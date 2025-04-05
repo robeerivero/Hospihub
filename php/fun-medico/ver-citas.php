@@ -29,7 +29,7 @@ $email = $_SESSION['email'];
     <!-- Fuentes y estilos -->
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-    <link rel="stylesheet" href="../css/ver.css">
+    <link rel="stylesheet" href="../css/citas.css">
     <style>
         .btn-asignar {
             background-color: #4CAF50;
@@ -57,7 +57,6 @@ $email = $_SESSION['email'];
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>ID Cita</th>
                     <th>Fecha</th>
                     <th>Hora</th>
                     <th>Estado</th>
@@ -66,20 +65,7 @@ $email = $_SESSION['email'];
             </thead>
             <tbody>
                 <?php
-                // Consulta para obtener citas pendientes del médico
-                $sql = "SELECT 
-                            c.Id_Cita, 
-                            c.Fecha, 
-                            DATE_FORMAT(c.Hora, '%H:%i:%s') AS Hora_Cita,
-                            c.Estado
-                        FROM 
-                            Cita c
-                        WHERE 
-                            c.Id_Medico = ? 
-
-                        ORDER BY 
-                            c.Fecha, c.Hora";
-                
+                $sql = "CALL ObtenerCitasMedico(?)";
                 $stmt = $conexion->prepare($sql);
                 $stmt->bind_param("i", $medico_id);
                 $stmt->execute();
@@ -88,14 +74,13 @@ $email = $_SESSION['email'];
                 if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
                         echo "<tr>";
-                        echo "<td>" . htmlspecialchars($row['Id_Cita']) . "</td>";
                         echo "<td>" . htmlspecialchars($row['Fecha']) . "</td>";
                         echo "<td>" . htmlspecialchars($row['Hora_Cita']) . "</td>";
                         echo "<td>" . htmlspecialchars($row['Estado']) . "</td>";
                         
                         // Botón de acción según el estado
                         if ($row['Estado'] == 'Paciente Asignado') {
-                            echo '<td><button class="btn-asignar" onclick="location.href=\'procesar-diagnostico.php?cita_id=' . $row['Id_Cita'] . '\'">Procesar Diagnóstico</button></td>';
+                            echo '<td><button class="btn-asignar" onclick="location.href=\'completar-citas.php?cita_id=' . $row['Id_Cita'] . '\'">Procesar Diagnóstico</button></td>';
                         } else {
                             echo '<td><button class="btn-asignar" onclick="location.href=\'ver-diagnostico.php?cita_id=' . $row['Id_Cita'] . '\'">Ver Diagnóstico</button></td>';
                         }
@@ -103,7 +88,7 @@ $email = $_SESSION['email'];
                         echo "</tr>";
                     }
                 } else {
-                    echo "<tr><td colspan='5'>No hay citas pendientes</td></tr>";
+                    echo "<tr><td colspan='4'>No hay citas pendientes</td></tr>";
                 }
                 
                 $stmt->close();

@@ -57,7 +57,7 @@ mysqli_close($conexion);
     <meta content="width=device-width, initial-scale=1" name="viewport">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;900&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-    <link rel="stylesheet" href="../css/register.css">
+    <link rel="stylesheet" href="../css/registro.css">
 </head>
 <body>
     <header>   

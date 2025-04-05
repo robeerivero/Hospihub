@@ -26,7 +26,8 @@ if ($_SERVER["REQUEST_METHOD"] != "POST" || !isset($_POST['hospital']) || !isset
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <link rel="stylesheet" href="../css/procesar-citas.css">
+    <link rel="stylesheet" href="../css/citas.css">
+
 </head>
 <body>
 
@@ -69,7 +70,6 @@ if ($_SERVER["REQUEST_METHOD"] != "POST" || !isset($_POST['hospital']) || !isset
                 echo "<table class='table table-striped'>";
                 echo "<thead>";
                 echo "<tr>";
-                echo "<th>ID Cita</th>";
                 echo "<th>Fecha</th>";
                 echo "<th>Hora</th>";
                 echo "<th>Médico</th>";
@@ -80,7 +80,6 @@ if ($_SERVER["REQUEST_METHOD"] != "POST" || !isset($_POST['hospital']) || !isset
 
                 while ($row = mysqli_fetch_assoc($result)) {
                     echo "<tr>";
-                    echo "<td>" . htmlspecialchars($row['Id_Cita']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['Fecha']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['Hora_Cita']) . "</td>";
                     echo "<td>" . htmlspecialchars($row['Nombre_Medico']) . "</td>";
@@ -113,10 +112,11 @@ if ($_SERVER["REQUEST_METHOD"] != "POST" || !isset($_POST['hospital']) || !isset
 
     </div>
 
-    <div class="footer-links">
-        <a href="elegir-citas.php" class="btn-volver">Volver atrás <span class="material-symbols-outlined">arrow_left_alt</span></a>
-        <a href="../menu-paciente.php" class="btn-menu">Regresar al menú del paciente <span class="material-symbols-outlined">arrow_left_alt</span></a>
-    </div>
+    <br><br><br><br>
+    <a href="../menu-paciente.php?id_paciente=<?php echo $id_paciente; ?>">
+        Regresar al menú del paciente 
+        <span class="material-symbols-outlined">arrow_left_alt</span>
+    </a>
 
 </body>
 </html>

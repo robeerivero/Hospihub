@@ -3,12 +3,6 @@ session_start();
 include('../conexion.php');
 $conexion = conexion();
 
-// Verificar si el médico ha iniciado sesión
-if (!isset($_SESSION['medico_id'])) {
-    header("Location: ../login/login-medico.php");
-    exit();
-}
-
 $medico_id = $_SESSION['medico_id'];
 $email = $_SESSION['email'];
 ?>
@@ -20,14 +14,14 @@ $email = $_SESSION['email'];
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>HospiHub - Citas Pendientes</title>
+    <title>HospiHub - Completar Citas</title>
 
     <meta name="author" content="David Conde Salado, Roberto Rivero Díaz, Jesús Javier Gallego Ibañez">
     <meta name="designer" content="David Conde Salado, Roberto Rivero Díaz, Jesús Javier Gallego Ibañez">
 
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-    <link rel="stylesheet" href="../css/procesar-diagnostico.css">
+    <link rel="stylesheet" href="../css/procesar.css">
 </head>
 <body>
 
@@ -42,32 +36,31 @@ $email = $_SESSION['email'];
 <table class="table table-striped">
     <thead>
         <tr>
-            <th>Id de la cita</th>
             <th>Fecha</th>
             <th>Hora</th>
-            <th>Id del Médico</th>
+            <th>Paciente</th>
             <th>Insertar Diagnóstico</th>
         </tr>
     </thead>
     <tbody>
         <?php
-        $sql = "SELECT Id_Cita, Fecha, DATE_FORMAT(Hora, '%H:%i:%s') AS Hora_Cita, Id_Medico 
-                FROM Cita 
-                WHERE Id_Medico = ? AND Estado = 'Paciente Asignado'";
-
+        $sql = "CALL ObtenerCitasPacienteAsignado(?)";
         $stmt = $conexion->prepare($sql);
         $stmt->bind_param("i", $medico_id);
         $stmt->execute();
         $result = $stmt->get_result();
 
-        while ($row = $result->fetch_assoc()) {
-            echo "<tr>";
-            echo "<td>" . htmlspecialchars($row['Id_Cita']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['Fecha']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['Hora_Cita']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['Id_Medico']) . "</td>";
-            echo "<td><button type='button' onclick='mostrarFormulario(" . $row['Id_Cita'] . ")'>Añadir</button></td>";
-            echo "</tr>";
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                echo "<tr>";
+                echo "<td>" . htmlspecialchars($row['Fecha']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['Hora_Cita']) . "</td>";
+                echo "<td>" . htmlspecialchars($row['Nombre_Paciente']) . " " . htmlspecialchars($row['Apellidos_Paciente']) . "</td>";
+                echo "<td><button type='button' onclick='mostrarFormulario(" . $row['Id_Cita'] . ")'>Añadir</button></td>";
+                echo "</tr>";
+            }
+        } else {
+            echo "<tr><td colspan='4'>No hay citas pendientes de completar</td></tr>";
         }
 
         $stmt->close();

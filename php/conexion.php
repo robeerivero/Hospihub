@@ -3,7 +3,7 @@ function conexion() {
     // Configuración de la conexión
     $servidor = '127.0.0.1'; // Servidor de la base de datos (localhost)
     $usuario = 'root'; // Usuario de la base de datos
-    $contrasenna = ''; // Contraseña del usuario (vacía si no tiene contraseña)
+    $contrasenna = 'password'; // Contraseña del usuario (vacía si no tiene contraseña)
     $baseDeDatos = 'hospihub'; // Nombre de la base de datos que has creado
 
     // Crear la conexión
@@ -20,7 +20,6 @@ function conexion() {
 
     if ($resultado) {
         $fila = mysqli_fetch_assoc($resultado);
-        echo "Conectado a la base de datos: " . $fila['DATABASE()'];
     } else {
         echo "Error en la consulta: " . mysqli_error($conn);
     }

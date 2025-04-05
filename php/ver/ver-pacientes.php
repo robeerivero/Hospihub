@@ -14,7 +14,7 @@ $result = mysqli_query($conexion, $sql);
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HospiHub - Lista de pacientes</title>
-    <link rel="stylesheet" href="../css/ver.css" type="text/css">
+    <link rel="stylesheet" href="../css/citas.css" type="text/css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <style>
         /* Estilo específico para la columna de acciones */

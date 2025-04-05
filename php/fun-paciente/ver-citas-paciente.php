@@ -22,7 +22,7 @@ $paciente_id = $_SESSION['id_paciente'];
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <link rel="stylesheet" href="../css/ver.css">
+    <link rel="stylesheet" href="../css/ver-detalles-cita.css">
 </head>
 <body>
 
@@ -52,7 +52,6 @@ $paciente_id = $_SESSION['id_paciente'];
         echo "<table class='table table-striped'>\n";
         echo "<thead>";
         echo "<tr>";
-        echo "<th>ID de la Cita</th>";
         echo "<th>Fecha</th>";
         echo "<th>Hora</th>";
         echo "<th>Médico</th>";
@@ -67,7 +66,6 @@ $paciente_id = $_SESSION['id_paciente'];
         // Recorrer resultados
         while ($row = mysqli_fetch_assoc($result)) {
             echo "<tr>";
-            echo "<td>" . htmlspecialchars($row['Id_Cita']) . "</td>";
             echo "<td>" . htmlspecialchars($row['Fecha']) . "</td>";
             echo "<td>" . htmlspecialchars($row['Hora']) . "</td>";
             echo "<td>" . htmlspecialchars($row['Nombre_Medico'] . " " . $row['Apellidos_Medico']) . "</td>";
@@ -78,7 +76,7 @@ $paciente_id = $_SESSION['id_paciente'];
             // Acciones según el estado
             echo "<td>";
             if ($row['Estado'] === 'Diagnostico Completo') {
-                echo "<a href='ver-diagnostico.php?id_cita=" . $row['Id_Cita'] . "' class='btn-ver'>Ver diagnóstico</a>";
+                echo "<a href='ver-detalles-cita.php?id_cita=" . $row['Id_Cita'] . "' class='btn-ver'>Ver diagnóstico</a>";
             } elseif ($row['Estado'] === 'Paciente Asignado') {
                 echo "<a href='cancelar-cita.php?id_cita=" . $row['Id_Cita'] . "' class='btn-cancelar'>Cancelar</a>";
             }

@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <!-- Enlaces a los archivos CSS -->
-    <link rel="stylesheet" href="css/menu.css">
+    <link rel="stylesheet" href="css/menu-principal.css">
     <title>HospiHub - Menú del adminstrador</title>
 </head>
 <body>
@@ -30,12 +30,11 @@
     <h1>Menú del Administrador <span class="material-symbols-outlined">
         admin_panel_settings
     </span></h1>
-
-    <div class="opcion">
-        <h2>Dar de Alta <span class="material-symbols-outlined">
+    <h2>Dar de Alta <span class="material-symbols-outlined">
             done
             </span>
         </h2>
+    <div class="opcion">
         <a href="insertar-register/register-paciente.php">Registrar a un paciente
             <span class="material-symbols-outlined">
                 personal_injury</span>
@@ -58,10 +57,11 @@
                 local_hospital
             </span>
         </a>
-    
-        <h2>Ver <span class="material-symbols-outlined">
+    </div>
+    <h2>Ver <span class="material-symbols-outlined">
             info
             </span></h2>
+    <div class="opcion">
         <a href="ver/ver-pacientes.php">Ver pacientes
             <span class="material-symbols-outlined">
                 personal_injury
@@ -85,11 +85,11 @@
                 local_hospital
             </span>
         </a>
-    
-    
-        <h2>Eliminar <span class="material-symbols-outlined">
+    </div>
+    <h2>Eliminar <span class="material-symbols-outlined">
             close
             </span></h2>
+    <div class="opcion">
         <a href="eliminar/eliminar-paciente.php">Eliminar paciente
             <span class="material-symbols-outlined">
                 personal_injury
@@ -113,14 +113,13 @@
                 local_hospital
             </span>
         </a>
+    </div>
         
-        <h2>Opciones de las citas <span class="material-symbols-outlined">
-            event
-            </span>
-        </h2>
-
-
-
+    <h2>Opciones de las citas <span class="material-symbols-outlined">
+        event
+        </span>
+    </h2>
+    <div class="opcion">
         <a href="admin-citas/crear-citas.php">Crear citas
             <span class="material-symbols-outlined">
                 event
@@ -139,14 +138,14 @@
                 event
             </span>
         </a>
+    </div>
+    <h2>Salir <span class="material-symbols-outlined">
+        logout
+        </span>
+    </h2>
+    <div class="opcion">
 
-
-        <h2>Salir <span class="material-symbols-outlined">
-            logout
-            </span>
-        </h2>
-
-        <a href="../hospihub" id="volver">Volver al inicio <span class="material-symbols-outlined">
+        <a href="index.html" id="volver">Volver al inicio <span class="material-symbols-outlined">
             home
             </span>
         </a>

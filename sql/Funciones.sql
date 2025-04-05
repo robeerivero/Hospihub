@@ -549,6 +549,30 @@ END$$
 
 DELIMITER ;
 
+-- -------------------------------
+-- OBTENER DEPARTAMENTOS HOSPITALES
+-- -------------------------------
+
+DELIMITER //
+
+CREATE PROCEDURE Obtener_Departamentos_Hospitales()
+BEGIN
+    SELECT 
+        d.Id_departamento,
+        d.Nombre AS Nombre_departamento,
+        d.Ubicacion AS Ubicacion_departamento,
+        h.Id_hospital,
+        h.Nombre AS Nombre_hospital,
+        dir.Ciudad AS Ciudad_hospital,
+        dir.Calle AS Calle_hospital
+    FROM 
+        Departamento d
+        JOIN Hospital h ON d.Id_hospital = h.Id_hospital
+        JOIN Direccion dir ON h.Id_direccion = dir.Id_direccion;
+END //
+
+DELIMITER ;
+
 
 -- -------------------------------
 -- OBTENER HOSPITALES
@@ -688,7 +712,7 @@ END//
 DELIMITER ;
 
 -- -------------------------------
--- OBTENER CITAS
+-- OBTENER CITAS PENDIENTES
 -- -------------------------------
 DELIMITER //
 CREATE PROCEDURE Obtener_Citas_Pendientes_Cursor(
@@ -717,8 +741,9 @@ END //
 DELIMITER ;
 
 -- -------------------------------
--- OBTENER CITAS
+-- OBTENER CITAS PACIENTE
 -- -------------------------------
+
 DELIMITER //
 CREATE PROCEDURE Obtener_Citas_Paciente(IN paciente_id INT)
 BEGIN
@@ -746,6 +771,85 @@ DELIMITER ;
 DELIMITER //
 
 -- -------------------------------
+-- OBTENER CITAS
+-- -------------------------------
+DELIMITER $$
+
+CREATE PROCEDURE Obtener_Citas()
+BEGIN
+    SELECT 
+        c.Id_Cita,
+        c.Fecha,
+        TIME_FORMAT(c.Hora, '%H:%i:%s') AS Hora,
+        m.Nombre AS Nombre_Medico,
+        m.Apellidos AS Apellidos_Medico,
+        p.Nombre AS Nombre_Paciente,
+        p.Apellidos AS Apellido_Paciente,
+        d.Nombre AS Nombre_Departamento,
+        h.Nombre AS Nombre_Hospital,
+        c.Estado
+    FROM 
+        Cita c
+        JOIN Medico m ON c.Id_medico = m.Id_medico
+        JOIN Departamento d ON m.Id_departamento = d.Id_departamento
+        JOIN Hospital h ON d.Id_hospital = h.Id_hospital
+        JOIN Paciente p ON c.Id_paciente = p.Id_paciente
+    ORDER BY 
+        c.Fecha DESC, c.Hora DESC;
+END $$
+
+DELIMITER ;
+-- -------------------------------
+-- OBTENER CITAS MEDICO
+-- -------------------------------
+DELIMITER //
+
+CREATE PROCEDURE ObtenerCitasMedico(IN medico_id INT)
+BEGIN
+    SELECT 
+        c.Id_Cita,
+        c.Fecha, 
+        DATE_FORMAT(c.Hora, '%H:%i:%s') AS Hora_Cita,
+        c.Estado,
+        p.Nombre AS Nombre_Paciente,
+        p.Apellidos AS Apellidos_Paciente
+    FROM 
+        Cita c
+        JOIN Paciente p ON c.Id_Paciente = p.Id_Paciente
+    WHERE 
+        c.Id_Medico = medico_id 
+        AND c.Estado IN ('Paciente Asignado')
+    ORDER BY 
+        c.Fecha, c.Hora;
+END //
+
+DELIMITER ;
+
+-- -------------------------------
+-- OBTENER CITAS PACIENTE ASIGNADO  
+-- -------------------------------
+DELIMITER //
+
+CREATE PROCEDURE ObtenerCitasPacienteAsignado(IN medico_id INT)
+BEGIN
+    SELECT 
+        c.Id_Cita, 
+        c.Fecha, 
+        DATE_FORMAT(c.Hora, '%H:%i:%s') AS Hora_Cita,
+        p.Nombre AS Nombre_Paciente, 
+        p.Apellidos AS Apellidos_Paciente
+    FROM 
+        Cita c
+        JOIN Paciente p ON c.Id_Paciente = p.Id_Paciente
+    WHERE 
+        c.Id_Medico = medico_id 
+        AND c.Estado = 'Paciente Asignado';
+END //
+
+DELIMITER ;
+
+DELIMITER //
+-- -------------------------------
 -- Verificar si una cita pertenece a un paciente
 -- -------------------------------
 
@@ -764,11 +868,11 @@ BEGIN
     
     RETURN existe;
 END //
-
+DELIMITER ;
 -- -------------------------------
 -- Cancelar una cita
 -- -------------------------------
-
+DELIMITER //
 CREATE PROCEDURE Cancelar_Cita(
     IN cita_id INT,
     IN paciente_id INT,

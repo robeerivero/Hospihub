@@ -22,7 +22,7 @@ $id_paciente = $_SESSION['id_paciente'];
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <link rel="stylesheet" href="../css/elegir-citas.css" type="text/css">
+    <link rel="stylesheet" href="../css/citas.css" type="text/css">
 </head>
 <body>  
     <header>
@@ -40,7 +40,7 @@ $id_paciente = $_SESSION['id_paciente'];
         $conexion = conexion();
 
         // Usar el procedimiento almacenado para obtener departamentos y hospitales
-        $sql = "CALL Obtener_Departamentos_Hospitales_Cursor()";
+        $sql = "CALL Obtener_Departamentos_Hospitales()";
         
         if ($result = mysqli_query($conexion, $sql)) {
             // Crear la tabla con los resultados
@@ -111,7 +111,8 @@ $id_paciente = $_SESSION['id_paciente'];
     </script>
     
     <br><br><br><br>
-    <a href="../menu-paciente.php">Regresar al menú del paciente 
+    <a href="../menu-paciente.php?id_paciente=<?php echo $id_paciente; ?>">
+        Regresar al menú del paciente 
         <span class="material-symbols-outlined">arrow_left_alt</span>
     </a>
 </body>

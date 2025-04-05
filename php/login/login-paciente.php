@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <!-- Enlaces a los archivos CSS -->
-    <link rel="stylesheet" href="../css/register.css">
+    <link rel="stylesheet" href="../css/registro.css">
     <!-- Enlace al archivo JavaScript -->
     
 </head>
@@ -92,7 +92,7 @@ mysqli_close($conexion);
         
         <br><br>
         
-        <button type="submit">Entrar</button>
+        <button type="submit">Iniciar sesión</button>
 
     </form>
     <br><br>

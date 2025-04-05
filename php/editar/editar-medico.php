@@ -85,7 +85,7 @@ mysqli_close($conexion);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-    <link rel="stylesheet" href="../css/register.css">
+    <link rel="stylesheet" href="../css/registro.css">
 </head>
 <body>
     <header>   
