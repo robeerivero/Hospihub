@@ -51,8 +51,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Verificar si se obtuvo un resultado
         if (mysqli_stmt_fetch($stmt)) {
             // Depuración: Ver valores
-            echo "PIN ingresado: " . $pin . "<br>";
-            echo "Hash en base de datos: " . $hashed_pin . "<br>";
+            //echo "PIN ingresado: " . $pin . "<br>";
+            //echo "Hash en base de datos: " . $hashed_pin . "<br>";
 
             // Usar password_verify para comparar el PIN ingresado con el hash almacenado
             if (password_verify($pin, $hashed_pin)) {

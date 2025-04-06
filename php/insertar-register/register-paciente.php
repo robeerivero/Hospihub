@@ -25,7 +25,7 @@
         $ciudad = $_POST["ciudad"];
         $calle = $_POST["calle"];
         $email = $_POST["email"];
-        $pin =  password_hash($_POST["pin"], PASSWORD_DEFAULT);
+        $pin =  password_hash($_POST["pin"], PASSWORD_BCRYPT);
 
         // Activar excepciones en MySQLi
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
