@@ -10,7 +10,7 @@ CREATE PROCEDURE Insertar_Paciente(
     IN ciudad_param VARCHAR(100),
     IN calle_param VARCHAR(255),
     IN email_param VARCHAR(100),
-    IN pin_param VARCHAR(50)
+    IN pin_param VARCHAR(255)
 )
 BEGIN
     DECLARE id_direccion_existente INT;
@@ -60,7 +60,7 @@ CREATE PROCEDURE Insertar_Medico(
     IN ciudad VARCHAR(50),
     IN calle VARCHAR(50),
     IN email VARCHAR(50),
-    IN pin INT
+    IN pin VARCHAR(255)
 )
 BEGIN
     DECLARE v_id_hospital INT;

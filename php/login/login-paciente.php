@@ -32,42 +32,55 @@ session_start();
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Recuperar datos del formulario
     $email = $_POST["email"];
-    $pin = $_POST["pin"];
-    
-    // Preparar la consulta SQL para verificar las credenciales
-    $sql = "SELECT id_paciente FROM Paciente WHERE email = ? AND pin = ?";
+    $pin = $_POST["pin"];  // El PIN ingresado por el usuario
+
+    // Preparar la consulta SQL para recuperar el hash del PIN desde la base de datos
+    $sql = "SELECT id_paciente, pin FROM Paciente WHERE email = ?";
 
     // Preparar la sentencia
     if ($stmt = mysqli_prepare($conexion, $sql)) {
-        // Vincular los parámetros
-        mysqli_stmt_bind_param($stmt, "si", $email, $pin);  // "si" significa que email es string y pin es integer
+        // Vincular el parámetro email
+        mysqli_stmt_bind_param($stmt, "s", $email);
 
         // Ejecutar la consulta
         mysqli_stmt_execute($stmt);
 
-        // Vincular el resultado
-        mysqli_stmt_bind_result($stmt, $paciente_id);
+        // Vincular los resultados
+        mysqli_stmt_bind_result($stmt, $paciente_id, $hashed_pin);
 
         // Verificar si se obtuvo un resultado
         if (mysqli_stmt_fetch($stmt)) {
-            // Si existe el paciente, iniciar sesión
-            $_SESSION['id_paciente'] = $paciente_id;
+            // Depuración: Ver valores
+            echo "PIN ingresado: " . $pin . "<br>";
+            echo "Hash en base de datos: " . $hashed_pin . "<br>";
 
-            // Redirigir al paciente a la página de ver citas
-            header("Location: ../menu-paciente.php?id_paciente=" . $paciente_id);
-            exit();
+            // Usar password_verify para comparar el PIN ingresado con el hash almacenado
+            if (password_verify($pin, $hashed_pin)) {
+                // Si la comparación es correcta, iniciar sesión
+                echo "¡Inicio de sesión exitoso!";
+                $_SESSION['id_paciente'] = $paciente_id;
+
+                // Redirigir al paciente a su menú
+                header("Location: ../menu-paciente.php?id_paciente=" . $paciente_id);
+                exit();
+            } else {
+                // Si el PIN es incorrecto
+                echo "<p style='color:red;'>El PIN es incorrecto. Por favor, inténtalo de nuevo.</p>";
+            }
         } else {
-            // Si no se encuentran las credenciales, mostrar mensaje de error
-            echo "<br><br><br><br><hr style='border-top: 3px solid red; border-bottom: 3px solid red;'><p style='color:red; text-align:center; font-size: 1.5em;'>Las credenciales de inicio de sesión son incorrectas. Por favor, inténtalo de nuevo.</p><hr style='border-top: 3px solid red; border-bottom: 3px solid red;'>";
+            // Si no se encuentra el usuario
+            echo "<p style='color:red;'>No se encontró un usuario con ese email.</p>";
         }
 
         // Cerrar la sentencia
         mysqli_stmt_close($stmt);
+    } else {
+        echo "<p style='color:red;'>Error al preparar la consulta.</p>";
     }
-}
 
-// Cerrar la conexión a la base de datos
-mysqli_close($conexion);
+    // Cerrar la conexión
+    mysqli_close($conexion);
+}
 ?>
 
 <header>   
@@ -88,7 +101,7 @@ mysqli_close($conexion);
         <br><br>
 
         <label for="pin">Pin</label><br>
-        <input type="number" id="pin" name="pin" required>
+        <input type="password" id="pin" name="pin" required>
         
         <br><br>
         

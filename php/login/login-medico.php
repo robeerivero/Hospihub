@@ -80,7 +80,7 @@
         <br><br>
 
         <label for="pin">Pin</label><br>
-        <input type="number" id="pin" name="pin" required>
+        <input type="password" id="pin" name="pin" required>
         <br><br>
 
         <button type="submit">Iniciar sesión</button>
