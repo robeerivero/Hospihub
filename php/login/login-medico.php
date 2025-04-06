@@ -7,8 +7,8 @@
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
     <!-- Metadatos del autor y diseñador del sitio -->
-    <meta name="author" content="Carlos Antonio Cortés Lora, Roberto Rivero Díaz">
-    <meta name="designer" content="Carlos Antonio Cortés Lora, Roberto Rivero Díaz">
+    <meta name="author" content="Jesús Javier Gallego Ibañez, Roberto Rivero Díaz, David Conde Salado Miguel Cabral Ramírez">
+    <meta name="designer" content="David Conde Salado, Jesús Javier Gallego Ibañez, Roberto Rivero Díaz Miguel Cabral Ramírez">
     <!-- Enlaces a las fuentes de Google y hojas de estilos -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,36 +30,39 @@
         $pin = $_POST["pin"];
 
         // Preparar la consulta para verificar credenciales
-        $sql = "SELECT id_medico FROM Medico WHERE email = ? AND pin = ?";
-        $stmt = mysqli_prepare($conexion, $sql);
+        $sql = "SELECT id_medico, pin FROM Medico WHERE email = ?";
         
-        if ($stmt) {
-            // Vincular parámetros
-            mysqli_stmt_bind_param($stmt, "ss", $email, $pin);
+        if ($stmt = mysqli_prepare($conexion, $sql)) {
+            // Vincular el parámetro email
+            mysqli_stmt_bind_param($stmt, "s", $email);
             mysqli_stmt_execute($stmt);
             mysqli_stmt_store_result($stmt);
 
             // Verificar si se encontró un médico con esas credenciales
             if (mysqli_stmt_num_rows($stmt) > 0) {
-                mysqli_stmt_bind_result($stmt, $medico_id);
+                mysqli_stmt_bind_result($stmt, $medico_id, $hashed_pin);
                 mysqli_stmt_fetch($stmt);
 
-                // Iniciar sesión y redirigir
-                session_start();
-                $_SESSION['medico_id'] = $medico_id;
-                $_SESSION['email'] = $email;
-                header("Location: ../menu-medico.php");
-                exit();
+                // Usar password_verify para comparar el PIN ingresado con el hash almacenado
+                if(password_verify($pin, $hashed_pin)) {
+                    session_start();
+                    $_SESSION['medico_id'] = $medico_id;
+                    $_SESSION['email'] = $email;
+                    header("Location: ../menu-medico.php");
+                    exit();
+                } else {
+                    echo "<br><br><br><br><hr style='border-top: 3px solid red; border-bottom: 3px solid red;'>
+                          <p style='color:red; text-align:center; font-size: 1.5em;'>Las credenciales de inicio de sesión son incorrectas. Por favor, inténtalo de nuevo.</p>
+                          <hr style='border-top: 3px solid red; border-bottom: 3px solid red;'>";
+                }
             } else {
                 echo "<br><br><br><br><hr style='border-top: 3px solid red; border-bottom: 3px solid red;'>
                       <p style='color:red; text-align:center; font-size: 1.5em;'>Las credenciales de inicio de sesión son incorrectas. Por favor, inténtalo de nuevo.</p>
                       <hr style='border-top: 3px solid red; border-bottom: 3px solid red;'>";
             }
-
             // Cerrar la consulta
             mysqli_stmt_close($stmt);
         }
-
         // Cerrar conexión a la base de datos
         mysqli_close($conexion);
     }

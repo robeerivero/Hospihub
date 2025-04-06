@@ -473,7 +473,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION Verificar_Credenciales_Medico(
     email_in VARCHAR(50), 
-    pin_in INT  -- Cambiado a INT para coincidir con el tipo de la tabla
+    pin_in VARCHAR(255)  -- Cambiado a VARCHAR(255) para coincidir con el tipo de la tabla 6/4/25
 ) RETURNS INT
 READS SQL DATA
 BEGIN
@@ -490,7 +490,7 @@ DELIMITER ;
 DELIMITER //
 CREATE FUNCTION Verificar_Credenciales_Paciente(
     email_in VARCHAR(50), 
-    pin_in INT  -- Cambiado a INT para coincidir con el tipo de la tabla
+    pin_in VARCHAR(255)  -- Cambiado a VARCHAR(255) para coincidir con el tipo de la tabla 6/4/2025
 ) RETURNS INT
 READS SQL DATA
 BEGIN
@@ -918,7 +918,7 @@ CREATE PROCEDURE Editar_Paciente(
     IN ciudad_param VARCHAR(100),
     IN calle_param VARCHAR(255),
     IN email_param VARCHAR(100),
-    IN pin_param VARCHAR(50)
+    IN pin_param VARCHAR(255)
 )
 BEGIN
     DECLARE id_direccion_existente INT;
@@ -970,7 +970,7 @@ CREATE PROCEDURE Editar_Medico(
     IN ciudad_param VARCHAR(100),
     IN calle_param VARCHAR(100),
     IN email_param VARCHAR(255),
-    IN pin_param VARCHAR(50),
+    IN pin_param VARCHAR(255),
     IN departamento_param VARCHAR(100),
     IN hospital_param VARCHAR(100)
 )

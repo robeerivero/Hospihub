@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <!DOCTYPE html>
 <html>
 <head>
@@ -21,8 +20,6 @@
 </head>
 <body>
 
-=======
->>>>>>> c993bab7cfec3bf1b63c42c52ae360c76ac24f70
 <?php
 // Incluir el archivo de conexión a la base de datos MySQL
 include('../conexion.php');

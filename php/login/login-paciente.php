@@ -7,8 +7,8 @@
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
     <!-- Metadatos del autor y diseñador del sitio -->
-    <meta name="author" content="Carlos Antonio Cortés Lora, Roberto Rivero Díaz">
-    <meta name="designer" content="Carlos Antonio Cortés Lora, Roberto Rivero Díaz">
+    <meta name="author" content="Jesús Javier Gallego Ibañez, Roberto Rivero Díaz, David Conde Salado Miguel Cabral Ramírez">
+    <meta name="designer" content="David Conde Salado, Jesús Javier Gallego Ibañez, Roberto Rivero Díaz Miguel Cabral Ramírez">
     <!-- Enlaces a las fuentes de Google y hojas de estilos -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,13 +67,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 // Si el PIN es incorrecto
                 echo "<p style='color:red;'>El PIN es incorrecto. Por favor, inténtalo de nuevo.</p>";
             }
+                // Redirigir al paciente a su menú
+                header("Location: ../menu-paciente.php?id_paciente=" . $paciente_id);
+                exit();
+            } else {
+                // Si el PIN es incorrecto
+                echo "<p style='color:red;'>El PIN es incorrecto. Por favor, inténtalo de nuevo.</p>";
+            }
         } else {
             // Si no se encuentra el usuario
             echo "<p style='color:red;'>No se encontró un usuario con ese email.</p>";
+            // Si no se encuentra el usuario
+            echo "<p style='color:red;'>No se encontró un usuario con ese email.</p>";
         }
-
         // Cerrar la sentencia
         mysqli_stmt_close($stmt);
+    } else {
+        echo "<p style='color:red;'>Error al preparar la consulta.</p>";
     } else {
         echo "<p style='color:red;'>Error al preparar la consulta.</p>";
     }

@@ -32,7 +32,7 @@ CREATE TABLE Paciente (
     Fecha_nacimiento DATE,
     Id_direccion INT,
     Email VARCHAR(50) UNIQUE,
-    PIN INT,
+    PIN VARCHAR(255),
     FOREIGN KEY (Id_direccion) REFERENCES Direccion(Id_direccion)
 );
 
@@ -46,7 +46,7 @@ CREATE TABLE Medico (
     Fecha_nacimiento DATE,
     Id_direccion INT,
     Email VARCHAR(50) UNIQUE,
-    PIN INT,
+    PIN VARCHAR(255),
     FOREIGN KEY (Id_departamento) REFERENCES Departamento(Id_departamento),
     FOREIGN KEY (Id_direccion) REFERENCES Direccion(Id_direccion)
 );
