@@ -1,0 +1,136 @@
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #3498db;
+    --accent-color: #e74c3c;
+    --success-color: #4CAF50;
+    --error-color: #d32f2f;
+    --background-color: #f4f7fa;
+    --font-family: 'Rubik', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-family);
+}
+
+body {
+    background-color: var(--background-color);
+    color: var(--primary-color);
+    padding-top: 6rem;
+    text-align: center;
+}
+
+/* Header */
+header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+}
+
+nav {
+    background-color: var(--primary-color);
+    padding: 1.2rem;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+#logo {
+    color: #fff;
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Mensajes */
+.success-message, .error-message {
+    max-width: 700px;
+    margin: 5rem auto 3rem;
+    padding: 2rem;
+    border-radius: 12px;
+    background-color: white;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+.success-message p {
+    color: var(--success-color);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.error-message p {
+    color: var(--error-color);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+hr {
+    margin: 1rem 0;
+    border: none;
+    height: 4px;
+    border-radius: 4px;
+}
+
+.success-message hr {
+    background: linear-gradient(to right, var(--success-color), #81c784);
+}
+
+.error-message hr {
+    background: linear-gradient(to right, var(--error-color), #ef5350);
+}
+
+/* Botones de acción */
+.action-buttons {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.action-buttons a {
+    text-decoration: none;
+    padding: 0.9rem 1.8rem;
+    border-radius: 10px;
+    font-weight: 500;
+    transition: background-color 0.3s ease, transform 0.2s;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.btn-return {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-return:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+}
+
+.btn-view {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-view:hover {
+    background-color: #1a252f;
+    transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .success-message p, .error-message p {
+        font-size: 1.2rem;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .action-buttons a {
+        width: 80%;
+        text-align: center;
+    }
+}

@@ -9,7 +9,7 @@
     // Verificar si hay un mensaje en la URL
     if (isset($_GET['mensaje'])) {
         if ($_GET['mensaje'] == "ok") {
-            $mensaje = "<p style='color: green; text-align: center;'>Departamento registrado correctamente.</p>";
+            $mensaje = "<p style='color: green; text-align: center;'>Hospital insertado correctamente.</p>";
         } elseif ($_GET['mensaje'] == "error") {
             $mensaje = "<p style='color: red; text-align: center;'>" . htmlspecialchars($_GET['detalle']) . "</p>";
         }
@@ -18,16 +18,16 @@
     // Comprobar si se envió el formulario
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Recuperar datos del formulario
-        $nombre_hospital = $_POST["nombre_hospital"];
-        $nombre_departamento = $_POST["nombre_departamento"];
-        $ubicacion = $_POST["ubicacion"];
+        $nombre = $_POST["nombre"];
+        $ciudad = $_POST["ciudad"];
+        $calle = $_POST["calle"];
 
         // Activar excepciones en MySQLi
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
         try {
             // Preparar la llamada al procedimiento almacenado
-            $sql = "CALL Insertar_Departamento(?, ?, ?)";
+            $sql = "CALL Insertar_Hospital(?, ?, ?)";
             $stmt = mysqli_prepare($conexion, $sql);
 
             if (!$stmt) {
@@ -35,25 +35,25 @@
             }
 
             // Vincular los parámetros
-            mysqli_stmt_bind_param($stmt, "sss", $nombre_hospital, $nombre_departamento, $ubicacion);
+            mysqli_stmt_bind_param($stmt, "sss", $nombre, $ciudad, $calle);
 
             // Ejecutar la sentencia
             mysqli_stmt_execute($stmt);
             mysqli_stmt_close($stmt);
 
             // Redirigir con mensaje de éxito
-            header("Location: " . $_SERVER['PHP_SELF'] . "?mensaje=ok");
+            header("Location: ".$_SERVER['PHP_SELF']."?mensaje=ok");
             exit();
 
         } catch (mysqli_sql_exception $e) {
             // Capturar errores de SQL
             $errorMsg = urlencode($e->getMessage());
-            header("Location: " . $_SERVER['PHP_SELF'] . "?mensaje=error&detalle=$errorMsg");
+            header("Location: ".$_SERVER['PHP_SELF']."?mensaje=error&detalle=$errorMsg");
             exit();
         } catch (Exception $e) {
             // Capturar otros errores
             $errorMsg = urlencode($e->getMessage());
-            header("Location: " . $_SERVER['PHP_SELF'] . "?mensaje=error&detalle=$errorMsg");
+            header("Location: ".$_SERVER['PHP_SELF']."?mensaje=error&detalle=$errorMsg");
             exit();
         }
     }
@@ -64,10 +64,9 @@
 <head>
 <script src="//cdn.conveythis.com/javascript/conveythis.js?api_key=pub_450bff64f17d3b1a1a1efac21fe1cfa8"></script>
 
-    <title>HospiHub - Insertar Departamento</title>  
+    <title>HospiHub - Insertar Hospital</title>  
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
-    <meta name="author" content="Roberto Rivero Díaz, Jesus Gallego Ibañez, David Conde Salado">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;900&display=swap" rel="stylesheet">
@@ -82,17 +81,17 @@
     </header>
 
     <div id="contenedor">
-        <h1><?php echo $mensaje; ?>Registrar Departamento<span class="material-symbols-outlined">business</span></h1>
+        <h1><?php echo $mensaje; ?>Registrar Hospital</h1>
     
         <form action="" method="post" id="formulario">
-            <label for="nombre_hospital">Nombre del hospital</label><br>
-            <input type="text" id="nombre_hospital" name="nombre_hospital" required>
+            <label for="nombre">Nombre del hospital</label><br>
+            <input type="text" id="nombre" name="nombre" required>
             <br><br>
-            <label for="nombre_departamento">Nombre del departamento</label><br>
-            <input type="text" id="nombre_departamento" name="nombre_departamento" required>
+            <label for="ciudad">Ciudad</label><br>
+            <input type="text" id="ciudad" name="ciudad" required>
             <br><br>
-            <label for="ubicacion">Ubicación</label><br>
-            <input type="text" id="ubicacion" name="ubicacion" required>
+            <label for="calle">Calle</label><br>
+            <input type="text" id="calle" name="calle" required>
             <br><br>
             <button type="submit">Registrar</button>
         </form>
