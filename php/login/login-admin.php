@@ -1,87 +1,50 @@
-<!DOCTYPE html>
-<html>
-<head>
-<script src="//cdn.conveythis.com/javascript/conveythis.js?api_key=pub_450bff64f17d3b1a1a1efac21fe1cfa8"></script>
-
-    <title>HospiHub - Login de administrador</title>
-    <meta charset="UTF-8">
-    <meta content="width=device-width, initial-scale=1" name="viewport">
-    <!-- Metadatos del autor y diseñador del sitio -->
-    <meta name="author" content="Jesús Javier Gallego Ibañez, Roberto Rivero Díaz, David Conde Salado">
-    <meta name="designer" content="David Conde Salado, Jesús Javier Gallego Ibañez, Roberto Rivero Díaz">
-    <!-- Enlaces a las fuentes de Google y hojas de estilos -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-    <!-- Enlaces a los archivos CSS -->
-    <link rel="stylesheet" href="../css/.css">
-</head>
-<body>
-
 <?php
-// Incluir el archivo de conexión a la base de datos MySQL
 include('../conexion.php');
-$conexion = conexion();  // Llamada a la función de conexión a la base de datos
+$conexion = conexion();
 session_start();
 
-// Inicializar mensaje de error
 $mensaje = "";
 
-// Comprobar si se envió el formulario
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Recuperar datos del formulario
     $email = $_POST["email"];
     $pin = $_POST["pin"];
-    
-    // Preparar la consulta SQL para verificar las credenciales y que sea el admin
-    $sql = "SELECT id_paciente FROM Paciente WHERE email = ? AND pin = ? AND Nombre = 'admin'";
 
-    // Preparar la sentencia
+    $sql = "SELECT id_paciente, pin FROM Paciente WHERE email = ? AND Nombre = 'admin'";
+
     if ($stmt = mysqli_prepare($conexion, $sql)) {
-        // Vincular los parámetros
-        mysqli_stmt_bind_param($stmt, "si", $email, $pin);  // "si" significa que email es string y pin es integer
-
-        // Ejecutar la consulta
+        mysqli_stmt_bind_param($stmt, "s", $email);
         mysqli_stmt_execute($stmt);
+        mysqli_stmt_bind_result($stmt, $admin_id, $hashed_pin);
 
-        // Vincular el resultado
-        mysqli_stmt_bind_result($stmt, $paciente_id);
-
-        // Verificar si se obtuvo un resultado y que el PIN sea 123
-        if (mysqli_stmt_fetch($stmt) && $pin == 123) {
-            // Si es el usuario correcto, iniciar sesión
-            $_SESSION['id_paciente'] = $paciente_id;
-
-            // Redirigir al admin al menú de administrador
-            header("Location: ../menu-admin.php?id_paciente=" . $paciente_id);
-            exit();
+        if (mysqli_stmt_fetch($stmt)) {
+            if (password_verify($pin, $hashed_pin)) {
+                $_SESSION['id_paciente'] = $admin_id;
+                header("Location: ../menu-admin.php?id_paciente=" . $admin_id);
+                exit();
+            } else {
+                $mensaje = "<p style='color: red; text-align: center;'>PIN incorrecto</p>";
+            }
         } else {
-            // Si no se encuentran las credenciales, mostrar mensaje de error
-            $mensaje = "<p style='color: red; text-align: center;'>Acceso denegado</p>";
+            $mensaje = "<p style='color: red; text-align: center;'>Credenciales inválidas</p>";
         }
 
-        // Cerrar la sentencia
         mysqli_stmt_close($stmt);
     }
+
+    mysqli_close($conexion);
 }
-
-// Cerrar la conexión a la base de datos
-mysqli_close($conexion);
 ?>
-
 <!DOCTYPE html>
 <html>
 <head>
-    <title>HospiHub - Login de paciente</title>
+    <title>HospiHub - Login de admin</title>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-    <link rel="stylesheet" href="../css/register.css">
+    <link rel="stylesheet" href="../css/registro.css">
 </head>
 <body>
 
@@ -92,7 +55,8 @@ mysqli_close($conexion);
 </header>
 
 <div id="contenedor">
-    <h1><?php echo $mensaje; ?>Iniciar sesión como admin<span class="material-symbols-outlined">personal_injury</span></h1>
+    <h1>Iniciar sesión como admin <span class="material-symbols-outlined">admin_panel_settings</span></h1>
+    <?php echo $mensaje; ?>
 
     <form action="" method="post" id="formulario">
         <label for="email">Email</label><br>
