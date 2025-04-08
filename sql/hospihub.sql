@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 01, 2025 at 07:39 PM
+-- Generation Time: Apr 08, 2025 at 09:44 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -61,8 +61,10 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `Cancelar_Cita` (IN `cita_id` INT, I
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `Crear_Citas` ()   BEGIN
-    DECLARE v_fecha DATE;
-    DECLARE v_hora DATETIME;
+    DECLARE v_fecha_inicio DATE;
+    DECLARE v_fecha_fin DATE;
+    DECLARE v_fecha_actual DATE;
+    DECLARE v_hora TIME;
     DECLARE v_estado VARCHAR(50) DEFAULT 'Paciente sin asignar';
     DECLARE v_citas_existen INT;
     
@@ -71,63 +73,78 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `Crear_Citas` ()   BEGIN
     DECLARE dept_id INT;
     DECLARE medico_id INT;
 
-    -- Cursores con nombres de tablas corregidos
+    -- Cursores para hospitales, departamentos y médicos
     DECLARE cur_hospital CURSOR FOR SELECT Id_hospital FROM Hospital;
     DECLARE cur_dept CURSOR FOR SELECT Id_departamento FROM Departamento WHERE Id_hospital = hospital_id;
     DECLARE cur_medico CURSOR FOR SELECT Id_medico FROM Medico WHERE Id_departamento = dept_id;
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
-    SET v_fecha = CURDATE();
+    -- Configurar rango de fechas (1 año desde hoy)
+    SET v_fecha_inicio = CURDATE();
+    SET v_fecha_fin = DATE_ADD(v_fecha_inicio, INTERVAL 1 YEAR);
+    SET v_fecha_actual = v_fecha_inicio;
 
-    -- Verificar citas existentes con nombre de tabla corregido
-    SELECT COUNT(*) INTO v_citas_existen FROM Cita WHERE Fecha = v_fecha;
-    IF v_citas_existen > 0 THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Ya existen citas para la fecha actual.';
-    END IF;
+    -- Crear citas para cada día del año
+    WHILE v_fecha_actual <= v_fecha_fin DO
+        -- Solo días laborables (de lunes a viernes)
+        IF DAYOFWEEK(v_fecha_actual) BETWEEN 2 AND 6 THEN
+            -- Verificar si ya existen citas para esta fecha
+            SELECT COUNT(*) INTO v_citas_existen FROM Cita WHERE Fecha = v_fecha_actual;
+            
+            IF v_citas_existen = 0 THEN
+                -- Reiniciar cursores para cada fecha
+                SET done = FALSE;
+                
+                OPEN cur_hospital;
+                hospital_loop: LOOP
+                    FETCH cur_hospital INTO hospital_id;
+                    IF done THEN LEAVE hospital_loop; END IF;
 
-    OPEN cur_hospital;
-    hospital_loop: LOOP
-        FETCH cur_hospital INTO hospital_id;
-        IF done THEN LEAVE hospital_loop; END IF;
+                    OPEN cur_dept;
+                    dept_loop: LOOP
+                        FETCH cur_dept INTO dept_id;
+                        IF done THEN LEAVE dept_loop; END IF;
 
-        OPEN cur_dept;
-        dept_loop: LOOP
-            FETCH cur_dept INTO dept_id;
-            IF done THEN LEAVE dept_loop; END IF;
+                        OPEN cur_medico;
+                        medico_loop: LOOP
+                            FETCH cur_medico INTO medico_id;
+                            IF done THEN LEAVE medico_loop; END IF;
 
-            OPEN cur_medico;
-            medico_loop: LOOP
-                FETCH cur_medico INTO medico_id;
-                IF done THEN LEAVE medico_loop; END IF;
+                            -- Crear citas cada hora desde las 8:00 hasta las 13:00
+                            SET v_hora = TIME('08:00:00');
+                            
+                            WHILE v_hora <= TIME('13:00:00') DO
+                                INSERT INTO Cita (
+                                    Id_medico, 
+                                    Fecha, 
+                                    Hora, 
+                                    Estado
+                                ) VALUES (
+                                    medico_id, 
+                                    v_fecha_actual, 
+                                    CONCAT(v_fecha_actual, ' ', v_hora), 
+                                    v_estado
+                                );
 
-                SET v_hora = CONCAT(v_fecha, ' 08:00:00');
+                                SET v_hora = ADDTIME(v_hora, '01:00:00');
+                            END WHILE;
 
-                WHILE HOUR(v_hora) < 14 DO
-                    INSERT INTO Cita (  -- Nombre de tabla corregido
-                        Id_medico, 
-                        Fecha, 
-                        Hora, 
-                        Estado
-                    ) VALUES (
-                        medico_id, 
-                        v_fecha, 
-                        v_hora, 
-                        v_estado
-                    );
-
-                    SET v_hora = ADDTIME(v_hora, '01:00:00');
-                END WHILE;
-
-            END LOOP;
-            CLOSE cur_medico;
-            SET done = FALSE;  -- Reset para próximo cursor
-        END LOOP;
-        CLOSE cur_dept;
-        SET done = FALSE;  -- Reset para próximo cursor
-    END LOOP;
-    CLOSE cur_hospital;
+                        END LOOP;
+                        CLOSE cur_medico;
+                        SET done = FALSE;
+                    END LOOP;
+                    CLOSE cur_dept;
+                    SET done = FALSE;
+                END LOOP;
+                CLOSE cur_hospital;
+            END IF;
+        END IF;
+        
+        SET v_fecha_actual = DATE_ADD(v_fecha_actual, INTERVAL 1 DAY);
+    END WHILE;
+    
+    SELECT CONCAT('Citas creadas desde ', v_fecha_inicio, ' hasta ', v_fecha_fin) AS Resultado;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `Editar_Departamento` (IN `p_id_departamento` INT, IN `p_nombre_hospital` VARCHAR(255), IN `p_nombre_departamento` VARCHAR(255), IN `p_ubicacion` VARCHAR(255))   BEGIN
@@ -147,14 +164,35 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `Editar_Departamento` (IN `p_id_depa
     -- Actualizar los datos del departamento si el hospital existe
     UPDATE Departamento
     SET
-        nombre= p_nombre_departamento,
-        ubicacion= p_ubicacion,
+        nombre = p_nombre_departamento,  -- Asegúrate de que 'nombre' sea el nombre correcto de la columna en tu tabla
+        ubicacion = p_ubicacion,         -- Asegúrate de que 'ubicacion' sea el nombre correcto de la columna en tu tabla
         Id_hospital = v_id_hospital
     WHERE Id_departamento = p_id_departamento;
 
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `Editar_Medico` (IN `id_medico_param` INT, IN `nombre_param` VARCHAR(100), IN `apellidos_param` VARCHAR(100), IN `telefono_param` VARCHAR(20), IN `fecha_nacimiento_param` DATE, IN `ciudad_param` VARCHAR(100), IN `calle_param` VARCHAR(100), IN `email_param` VARCHAR(255), IN `pin_param` VARCHAR(50), IN `departamento_param` VARCHAR(100), IN `hospital_param` VARCHAR(100))   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Editar_Hospital` (IN `p_Id_hospital` INT, IN `p_Nombre` VARCHAR(255), IN `p_Ciudad` VARCHAR(255), IN `p_Calle` VARCHAR(255))   BEGIN
+    DECLARE v_Id_direccion INT;
+    
+    -- Verificar si la dirección ya existe
+    SELECT Id_direccion INTO v_Id_direccion 
+    FROM direccion 
+    WHERE Ciudad = p_Ciudad AND Calle = p_Calle
+    LIMIT 1;
+    
+    -- Si no existe, insertar nueva dirección
+    IF v_Id_direccion IS NULL THEN
+        INSERT INTO direccion (Ciudad, Calle) VALUES (p_Ciudad, p_Calle);
+        SET v_Id_direccion = LAST_INSERT_ID();
+    END IF;
+    
+    -- Actualizar el hospital con el nuevo nombre y la dirección
+    UPDATE hospital 
+    SET Nombre = p_Nombre, Id_direccion = v_Id_direccion
+    WHERE Id_hospital = p_Id_hospital;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Editar_Medico` (IN `id_medico_param` INT, IN `nombre_param` VARCHAR(100), IN `apellidos_param` VARCHAR(100), IN `telefono_param` VARCHAR(20), IN `fecha_nacimiento_param` DATE, IN `ciudad_param` VARCHAR(100), IN `calle_param` VARCHAR(100), IN `email_param` VARCHAR(255), IN `pin_param` VARCHAR(255), IN `departamento_param` VARCHAR(100), IN `hospital_param` VARCHAR(100))   BEGIN
     DECLARE id_direccion_existente INT;
     DECLARE id_departamento_existente INT;
     DECLARE id_hospital_existente INT;
@@ -208,7 +246,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `Editar_Medico` (IN `id_medico_param
     WHERE Id_medico = id_medico_param;
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `Editar_Paciente` (IN `id_paciente_param` INT, IN `nombre_param` VARCHAR(100), IN `apellidos_param` VARCHAR(100), IN `telefono_param` VARCHAR(20), IN `fecha_nacimiento_param` DATE, IN `ciudad_param` VARCHAR(100), IN `calle_param` VARCHAR(255), IN `email_param` VARCHAR(100), IN `pin_param` VARCHAR(50))   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Editar_Paciente` (IN `id_paciente_param` INT, IN `nombre_param` VARCHAR(100), IN `apellidos_param` VARCHAR(100), IN `telefono_param` VARCHAR(20), IN `fecha_nacimiento_param` DATE, IN `ciudad_param` VARCHAR(100), IN `calle_param` VARCHAR(255), IN `email_param` VARCHAR(100), IN `pin_param` VARCHAR(255))   BEGIN
     DECLARE id_direccion_existente INT;
 
     -- Verificar si la dirección ya existe
@@ -430,7 +468,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `Insertar_Medicamento` (IN `id_diagn
     SELECT 'Medicamento insertado correctamente' AS mensaje;
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `Insertar_Medico` (IN `nombre_hospital` VARCHAR(50), IN `nombre_departamento` VARCHAR(50), IN `nombre` VARCHAR(50), IN `apellidos` VARCHAR(50), IN `telefono` INT, IN `fecha_nacimiento` DATE, IN `ciudad` VARCHAR(50), IN `calle` VARCHAR(50), IN `email` VARCHAR(50), IN `pin` INT)   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Insertar_Medico` (IN `nombre_hospital` VARCHAR(50), IN `nombre_departamento` VARCHAR(50), IN `nombre` VARCHAR(50), IN `apellidos` VARCHAR(50), IN `telefono` INT, IN `fecha_nacimiento` DATE, IN `ciudad` VARCHAR(50), IN `calle` VARCHAR(50), IN `email` VARCHAR(50), IN `pin` VARCHAR(255))   BEGIN
     DECLARE v_id_hospital INT;
     DECLARE v_id_departamento INT;
 
@@ -463,7 +501,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `Insertar_Medico` (IN `nombre_hospit
     SELECT 'Médico insertado correctamente' AS Mensaje;
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `Insertar_Paciente` (IN `nombre_param` VARCHAR(100), IN `apellidos_param` VARCHAR(100), IN `telefono_param` VARCHAR(20), IN `fecha_nacimiento_param` DATE, IN `ciudad_param` VARCHAR(100), IN `calle_param` VARCHAR(255), IN `email_param` VARCHAR(100), IN `pin_param` VARCHAR(50))   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Insertar_Paciente` (IN `nombre_param` VARCHAR(100), IN `apellidos_param` VARCHAR(100), IN `telefono_param` VARCHAR(20), IN `fecha_nacimiento_param` DATE, IN `ciudad_param` VARCHAR(100), IN `calle_param` VARCHAR(255), IN `email_param` VARCHAR(100), IN `pin_param` VARCHAR(255))   BEGIN
     DECLARE id_direccion_existente INT;
 
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -495,6 +533,84 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `Insertar_Paciente` (IN `nombre_para
 
     COMMIT;
     SELECT 'Paciente insertado correctamente' AS Mensaje;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `ObtenerCitasMedico` (IN `medico_id` INT)   BEGIN
+    SELECT 
+        c.Id_Cita,
+        c.Fecha, 
+        DATE_FORMAT(c.Hora, '%H:%i:%s') AS Hora_Cita,
+        c.Estado,
+        p.Nombre AS Nombre_Paciente,
+        p.Apellidos AS Apellidos_Paciente
+    FROM 
+        Cita c
+        JOIN Paciente p ON c.Id_Paciente = p.Id_Paciente
+    WHERE 
+        c.Id_Medico = medico_id 
+        AND c.Estado IN ('Paciente Asignado')
+    ORDER BY 
+        c.Fecha, c.Hora;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `ObtenerCitasPacienteAsignado` (IN `medico_id` INT)   BEGIN
+    SELECT 
+        c.Id_Cita, 
+        c.Fecha, 
+        DATE_FORMAT(c.Hora, '%H:%i:%s') AS Hora_Cita,
+        p.Nombre AS Nombre_Paciente, 
+        p.Apellidos AS Apellidos_Paciente
+    FROM 
+        Cita c
+        JOIN Paciente p ON c.Id_Paciente = p.Id_Paciente
+    WHERE 
+        c.Id_Medico = medico_id 
+        AND c.Estado = 'Paciente Asignado';
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `ObtenerDiagnosticoPorCita` (IN `cita_id` INT)   BEGIN
+    SELECT 
+        diag.Descripcion, 
+        diag.Recomendacion
+    FROM 
+        Cita c
+        JOIN Diagnostico diag ON c.Id_diagnostico = diag.Id_diagnostico
+    WHERE 
+        c.Id_cita = cita_id;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `ObtenerMedicamentosPorCita` (IN `cita_id` INT)   BEGIN
+    SELECT 
+        med.Nombre, 
+        med.Frecuencia
+    FROM 
+        Cita c
+        JOIN Diagnostico diag ON c.Id_diagnostico = diag.Id_diagnostico
+        JOIN Medicamento med ON diag.Id_diagnostico = med.Id_diagnostico
+    WHERE 
+        c.Id_cita = cita_id;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Obtener_Citas` ()   BEGIN
+    SELECT 
+        c.Id_Cita,
+        c.Fecha,
+        TIME_FORMAT(c.Hora, '%H:%i:%s') AS Hora,
+        m.Nombre AS Nombre_Medico,
+        m.Apellidos AS Apellidos_Medico,
+        p.Nombre AS Nombre_Paciente,
+        p.Apellidos AS Apellido_Paciente,
+        d.Nombre AS Nombre_Departamento,
+        h.Nombre AS Nombre_Hospital,
+        c.Estado
+    FROM 
+        Cita c
+        JOIN Medico m ON c.Id_medico = m.Id_medico
+        JOIN Departamento d ON m.Id_departamento = d.Id_departamento
+        JOIN Hospital h ON d.Id_hospital = h.Id_hospital
+        JOIN Paciente p ON c.Id_paciente = p.Id_paciente
+    ORDER BY 
+        c.Fecha DESC, c.Hora DESC;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `Obtener_Citas_Paciente` (IN `paciente_id` INT)   BEGIN
@@ -537,6 +653,21 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `Obtener_Citas_Pendientes_Cursor` (I
         AND c.Fecha = p_fecha;  -- Usamos fecha directamente
 END$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Obtener_Departamentos_Hospitales` ()   BEGIN
+    SELECT 
+        d.Id_departamento,
+        d.Nombre AS Nombre_departamento,
+        d.Ubicacion AS Ubicacion_departamento,
+        h.Id_hospital,
+        h.Nombre AS Nombre_hospital,
+        dir.Ciudad AS Ciudad_hospital,
+        dir.Calle AS Calle_hospital
+    FROM 
+        Departamento d
+        JOIN Hospital h ON d.Id_hospital = h.Id_hospital
+        JOIN Direccion dir ON h.Id_direccion = dir.Id_direccion;
+END$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `Obtener_Departamentos_Hospitales_Cursor` (IN `id_departamento_param` INT)   BEGIN
     IF id_departamento_param IS NULL OR id_departamento_param = 0 THEN
         -- Si no se proporciona un ID, devolver todos los departamentos
@@ -571,15 +702,30 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `Obtener_Departamentos_Hospitales_Cu
     END IF;
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `Obtener_Hospitales_Cursor` ()   BEGIN
-    SELECT 
-        h.Id_hospital,
-        h.Nombre AS Nombre_hospital,
-        dir.Ciudad AS Ciudad_hospital,  -- Desde Direccion
-        dir.Calle AS Calle_hospital      -- Desde Direccion
-    FROM 
-        Hospital h
-        JOIN Direccion dir ON h.Id_direccion = dir.Id_direccion;  -- JOIN añadido
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Obtener_Hospitales_Cursor` (IN `p_Id_hospital` INT)   BEGIN
+    IF p_Id_hospital IS NULL OR p_Id_hospital = 0 THEN
+        -- Si no se recibe un ID o es 0, devuelve todos los hospitales
+        SELECT 
+            h.Id_hospital,
+            h.Nombre AS Nombre_hospital,
+            dir.Ciudad AS Ciudad_hospital,
+            dir.Calle AS Calle_hospital
+        FROM 
+            Hospital h
+            JOIN Direccion dir ON h.Id_direccion = dir.Id_direccion;
+    ELSE
+        -- Si se recibe un ID válido, devuelve solo ese hospital
+        SELECT 
+            h.Id_hospital,
+            h.Nombre AS Nombre_hospital,
+            dir.Ciudad AS Ciudad_hospital,
+            dir.Calle AS Calle_hospital
+        FROM 
+            Hospital h
+            JOIN Direccion dir ON h.Id_direccion = dir.Id_direccion
+        WHERE 
+            h.Id_hospital = p_Id_hospital;
+    END IF;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `Obtener_Medicos_Cursor` (IN `id_medico_param` INT)   BEGIN
@@ -687,26 +833,6 @@ CREATE DEFINER=`root`@`localhost` FUNCTION `Verificar_Cita_Paciente` (`cita_id` 
     RETURN existe;
 END$$
 
-CREATE DEFINER=`root`@`localhost` FUNCTION `Verificar_Credenciales_Medico` (`email_in` VARCHAR(50), `pin_in` INT) RETURNS INT(11) READS SQL DATA BEGIN
-    DECLARE id_medico INT;
-
-    SELECT Id_Medico INTO id_medico
-    FROM Medico  -- Nombre de tabla corregido
-    WHERE Email = email_in AND PIN = pin_in;
-
-    RETURN COALESCE(id_medico, 0);
-END$$
-
-CREATE DEFINER=`root`@`localhost` FUNCTION `Verificar_Credenciales_Paciente` (`email_in` VARCHAR(50), `pin_in` INT) RETURNS INT(11) READS SQL DATA BEGIN
-    DECLARE paciente_id INT;
-
-    SELECT Id_paciente INTO paciente_id
-    FROM Paciente  -- Nombre de tabla corregido
-    WHERE Email = email_in AND PIN = pin_in;
-
-    RETURN COALESCE(paciente_id, 0);
-END$$
-
 DELIMITER ;
 
 -- --------------------------------------------------------
@@ -743,9 +869,10 @@ CREATE TABLE `departamento` (
 --
 
 INSERT INTO `departamento` (`Id_departamento`, `Id_hospital`, `Nombre`, `Ubicacion`) VALUES
-(1, 1, 'Cardiología', 'Piso 1'),
-(2, 2, 'sklfmrwkmfw', 'efapkmfea'),
-(3, 2, 'Traumatología', 'Piso 3');
+(1, 1, 'Neurología', 'Piso 1'),
+(2, 2, 'Oncología', 'Piso 2'),
+(3, 3, 'Dermatología', 'Piso 3'),
+(4, 4, 'Ginecología', 'Piso 4');
 
 -- --------------------------------------------------------
 
@@ -776,10 +903,10 @@ CREATE TABLE `direccion` (
 --
 
 INSERT INTO `direccion` (`Id_direccion`, `Ciudad`, `Calle`) VALUES
-(1, 'Madrid', 'Gran Vía 1'),
-(2, 'Barcelona', 'Diagonal 100'),
-(3, 'Valencia', 'Avenida del Puerto 45'),
-(4, 'NULL', 'NULL');
+(1, 'Sevilla', 'Calle Sierpes 12'),
+(2, 'Bilbao', 'Gran Vía 45'),
+(3, 'Zaragoza', 'Paseo Independencia 33'),
+(4, 'Málaga', 'Avenida de Andalucía 20');
 
 -- --------------------------------------------------------
 
@@ -798,9 +925,10 @@ CREATE TABLE `hospital` (
 --
 
 INSERT INTO `hospital` (`Id_hospital`, `Nombre`, `Id_direccion`) VALUES
-(1, 'Hospital Central', 1),
-(2, 'Clínica Barcelona', 2),
-(3, 'Hospital Valencia', 3);
+(1, 'Hospital de Sevilla', 1),
+(2, 'Hospital de Bilbao', 2),
+(3, 'Hospital de Zaragoza', 3),
+(4, 'Hospital de Málaga', 4);
 
 -- --------------------------------------------------------
 
@@ -830,7 +958,7 @@ CREATE TABLE `medico` (
   `Fecha_nacimiento` date DEFAULT NULL,
   `Id_direccion` int(11) DEFAULT NULL,
   `Email` varchar(50) DEFAULT NULL,
-  `PIN` int(11) DEFAULT NULL
+  `PIN` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -838,9 +966,10 @@ CREATE TABLE `medico` (
 --
 
 INSERT INTO `medico` (`Id_medico`, `Id_departamento`, `Nombre`, `Apellidos`, `Telefono`, `Fecha_nacimiento`, `Id_direccion`, `Email`, `PIN`) VALUES
-(1, 1, 'Laura', 'Fernández', 642345678, '1975-03-21', 1, 'laura.fernandez@mail.com', 4321),
-(2, 3, 'David', 'Martínez', 652345678, '1983-11-10', 2, 'david.martinez@mail.com', 8765),
-(3, 3, 'Sofía', 'Ruiz', 662345678, '1990-06-15', 3, 'sofia.ruiz@mail.com', 1112);
+(1, 1, 'Carmen', 'Herrera', 695678915, '1970-08-21', 1, 'carmen.herrera@mail.com', '$2y$10$3Q45m/iiDDprF38l8fZAEOg2fdt483iaLrywBUYp1hyHYe5QNcEGm'),
+(2, 2, 'José', 'Navarro', 705678916, '1982-04-10', 2, 'jose.navarro@mail.com', '$2y$10$xkkf6Ayc/vlrxa0yi83xMuE2PqVxIiUM..GX6SULyVoGPOh1cw2mO'),
+(3, 3, 'Patricia', 'Ortega', 715678917, '1991-01-15', 3, 'patricia.ortega@mail.com', ' $2y$10$IvfthNOLDWTVAfNZ9LzrAOGFe35ChWSjK.nRa0bBqDO2L3SWkNAsq'),
+(4, 4, 'Alejandro', 'Jiménez', 725678918, '1975-07-09', 4, 'alejandro.jimenez@mail.com', '$2y$10$WWghxpLpOxwEVCOGHJUTi.kT.PRoz1q5msK5zkm0R1JFr07zPr5Le');
 
 -- --------------------------------------------------------
 
@@ -856,7 +985,7 @@ CREATE TABLE `paciente` (
   `Fecha_nacimiento` date DEFAULT NULL,
   `Id_direccion` int(11) DEFAULT NULL,
   `Email` varchar(50) DEFAULT NULL,
-  `PIN` int(11) DEFAULT NULL
+  `PIN` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -864,10 +993,11 @@ CREATE TABLE `paciente` (
 --
 
 INSERT INTO `paciente` (`Id_paciente`, `Nombre`, `Apellidos`, `Telefono`, `Fecha_nacimiento`, `Id_direccion`, `Email`, `PIN`) VALUES
-(1, 'Juan', 'Pérez', 612345678, '1980-05-14', 1, 'juan.perez@mail.com', 1234),
-(2, 'Ana', 'López', 622345678, '1992-07-22', 2, 'ana.lopez@mail.com', 5678),
-(3, 'Carlos', 'Gómez', 632345678, '1985-10-30', 3, 'carlos.gomez@mail.com', 9101),
-(4, 'admin', 'admin', 0, '0000-00-00', 4, 'admin@mail.com', 123);
+(1, 'Luis', 'Ramírez', 645678910, '1995-09-12', 1, 'luis.ramirez@mail.com', '$2y$10$TTEHVGLUepuj0lZzE5S28.30TdXRuDIvRgRSPRuV2QxmMNUDS58CG'),
+(2, 'Marta', 'Sánchez', 655678911, '2000-12-05', 2, 'marta.sanchez@mail.com', '$2y$10$eP9UVL56/tpXZHIH5jvc7ezCjnwi0hOYpjI.sdOJ.knYcCbGUqZQ2'),
+(3, 'Roberto', 'Díaz', 665678912, '1988-03-25', 3, 'roberto.diaz@mail.com', '$2y$10$jKhT7jcxdbIGzq7AKw5NP.TOv17hiPXDwy88/OAm2Fm5yta1NkKvi'),
+(4, 'Elena', 'Torres', 675678913, '1993-06-17', 4, 'elena.torres@mail.com', '$2y$10$CY9BTAr3FGKNuUOus.FBYu6OMsO5oSW0quOhJojg2lMuOBrZMEg3.'),
+(5, 'admin', 'admin', 0, '0000-00-00', 4, 'admin@mail.com', '$2y$10$hCfnOOlCoNX1lO1gkDrGfu6OnCMYVWmik1KhvyAbxZEUdGdoWd4oC');
 
 --
 -- Indexes for dumped tables
@@ -948,7 +1078,7 @@ ALTER TABLE `cita`
 -- AUTO_INCREMENT for table `departamento`
 --
 ALTER TABLE `departamento`
-  MODIFY `Id_departamento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `Id_departamento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `diagnostico`
@@ -966,7 +1096,7 @@ ALTER TABLE `direccion`
 -- AUTO_INCREMENT for table `hospital`
 --
 ALTER TABLE `hospital`
-  MODIFY `Id_hospital` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `Id_hospital` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `medicamento`
@@ -978,13 +1108,13 @@ ALTER TABLE `medicamento`
 -- AUTO_INCREMENT for table `medico`
 --
 ALTER TABLE `medico`
-  MODIFY `Id_medico` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `Id_medico` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `paciente`
 --
 ALTER TABLE `paciente`
-  MODIFY `Id_paciente` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `Id_paciente` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- Constraints for dumped tables

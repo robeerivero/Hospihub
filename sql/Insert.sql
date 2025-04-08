@@ -24,8 +24,8 @@ INSERT INTO Paciente (Nombre, Apellidos, Telefono, Fecha_nacimiento, Id_direccio
 ('Luis', 'Ramírez', 645678910, '1995-09-12', 1, 'luis.ramirez@mail.com', "$2y$10$TTEHVGLUepuj0lZzE5S28.30TdXRuDIvRgRSPRuV2QxmMNUDS58CG"),
 ('Marta', 'Sánchez', 655678911, '2000-12-05', 2, 'marta.sanchez@mail.com', "$2y$10$eP9UVL56/tpXZHIH5jvc7ezCjnwi0hOYpjI.sdOJ.knYcCbGUqZQ2"),
 ('Roberto', 'Díaz', 665678912, '1988-03-25', 3, 'roberto.diaz@mail.com', "$2y$10$jKhT7jcxdbIGzq7AKw5NP.TOv17hiPXDwy88/OAm2Fm5yta1NkKvi"),
-('Elena', 'Torres', 675678913, '1993-06-17', 4, 'elena.torres@mail.com', "$2y$10$CY9BTAr3FGKNuUOus.FBYu6OMsO5oSW0quOhJojg2lMuOBrZMEg3.")
-('admin', 'admin', 0, '0000-00-00', 4, 'admin@mail.com', "$2y$10$hCfnOOlCoNX1lO1gkDrGfu6OnCMYVWmik1KhvyAbxZEUdGdoWd4oC")
+('Elena', 'Torres', 675678913, '1993-06-17', 4, 'elena.torres@mail.com', "$2y$10$CY9BTAr3FGKNuUOus.FBYu6OMsO5oSW0quOhJojg2lMuOBrZMEg3."),
+('admin', 'admin', 0, '0000-00-00', 4, 'admin@mail.com', "$2y$10$hCfnOOlCoNX1lO1gkDrGfu6OnCMYVWmik1KhvyAbxZEUdGdoWd4oC");
 
 -- Insertar más médicos PIN: {4567, 5678, 6789, 7890}
 INSERT INTO Medico (Id_departamento, Nombre, Apellidos, Telefono, Fecha_nacimiento, Id_direccion, Email, PIN) VALUES 
