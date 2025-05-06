@@ -9,6 +9,7 @@ use App\Http\Controllers\HospitalController;
 use App\Http\Controllers\MedicoController;
 use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\DepartamentoController;
+use App\Http\Controllers\EnfermedadController; // ✅ MOVIDO AQUÍ ARRIBA
 
 // Controladores de eliminación
 use App\Http\Controllers\EliminarHospitalController;
@@ -56,3 +57,6 @@ Route::post('/eliminar/paciente', [EliminarPacienteController::class, 'eliminar'
 
 Route::get('/eliminar/departamento', [EliminarDepartamentoController::class, 'form'])->name('departamentos.eliminar.form');
 Route::post('/eliminar/departamento', [EliminarDepartamentoController::class, 'eliminar'])->name('departamentos.eliminar');
+
+// Ruta para mostrar datos COVID desde la API
+Route::get('/enfermedades/covid', [EnfermedadController::class, 'mostrarCovid'])->name('enfermedades.covid');
