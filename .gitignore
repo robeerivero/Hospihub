@@ -1,4 +1,5 @@
 /.phpunit.cache
+/vendor/
 /node_modules
 /public/build
 /public/hot
@@ -6,8 +7,15 @@
 /storage/*.key
 /storage/pail
 
-.env.backup
-.env.production
+# Cache, logs y sesiones
+/bootstrap/cache/
+storage/*
+!storage/app/
+!storage/framework/
+!storage/logs/
+
+.env
+.env.example
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
