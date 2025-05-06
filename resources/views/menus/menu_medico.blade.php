@@ -6,7 +6,7 @@
     <!--           ConveyThis Script End         -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏥 Bienvenido a HospiHub</title>
+    <title>🏥 Menú de Médicos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="d-flex align-items-center justify-content-center vh-100 bg-light">
@@ -14,7 +14,7 @@
     <!-- Notificación (Toast) -->
     @if(session('success'))
     <div class="toast-container position-fixed top-0 end-0 p-3">
-        <div id="logoutToast" class="toast show align-items-center text-white bg-primary border-0" role="alert">
+        <div id="loginToast" class="toast show align-items-center text-white bg-primary border-0" role="alert">
             <div class="d-flex">
                 <div class="toast-body">
                     {{ session('success') }}
@@ -26,18 +26,21 @@
     @endif
 
     <div class="text-center p-5 bg-white shadow rounded w-50">
-        <h1 class="mb-3">🏥 Bienvenido a HospiHub!</h1>
-        <p class="lead">Tu plataforma de gestión de salud.</p>
-        <p class="mb-4">Accede a tu cuenta o registrate para comenzar.</p>
+        <h1 class="mb-3">Bienvenido, Dr. {{ Auth::user()->Nombre }} 🧑‍⚕️ </h1>
+        <p class="mb-4">Selecciona una opción para gestionar tu trabajo: </p>
 
-        <a href="{{ route('login') }}" class="btn btn-secondary">Iniciar Sesión</a>
-        <a href="{{ route('registro') }}" class="btn btn-primary">Registrarse como Paciente</a>
+        <div class="d-grid gap-3">
+            <a href="{{ route('/medico/citas') }}" class="btn btn-primary">📅 Gestionar Citas</a>
+            <a href="{{ route('/medico/pacientes') }}" class="btn btn-success">👥 Gestionar Pacientes</a>
+            <a href="{{ route('/medico/consultas') }}" class="btn btn-info">🩺 Consultas Médicas</a>
+            <a href="{{ route('logout') }}" class="btn btn-danger">❌ Cerrar Sesión</a>
+        </div>
     </div>
 
     <!-- Script para mostrar el Toast automáticamente -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            var toastNoti = document.getElementById('logoutToast');
+            var toastNoti = document.getElementById('loginToast');
             if(toastNoti) {
                 var toast = new bootstrap.Toast(toastNoti);
                 toast.show();

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 // Controladores generales
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\CitaController;
 use App\Http\Controllers\PacienteCitaController;
 use App\Http\Controllers\HospitalController;
@@ -22,14 +23,35 @@ Route::get('/', function () {
     return view('home');
 });
 
+//Mostrar la vista de registro
+Route::view('/registro', 'registro')->name('registro');
+//Guardar el registro de un paciente
+Route::post('/registro', [PacienteController::class, 'registrar'])->name('registro');
+
+//Mostrar la vista de login
+Route::get('/login', [LoginController::class, 'mostrarFormularioLogin'])->name('login');
+//Iniciar sesión
+Route::post('/login', [LoginController::class, 'login'])->name('login');
+//Cerrar sesión
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
 // Rutas para pacientes autenticados
 Route::middleware(['auth', 'paciente'])->group(function () {
+    //Mostrar la vista del menú del paciente
+    Route::view('menu_paciente', 'menu_paciente')->name('menu_paciente');
     Route::get('/paciente/citas', [PacienteCitaController::class, 'index'])->name('paciente.citas.index');
     Route::get('/paciente/citas/{id}', [PacienteCitaController::class, 'show'])->name('paciente.citas.show');
     Route::get('/paciente/elegir', [PacienteCitaController::class, 'formElegir'])->name('paciente.citas.elegir');
     Route::post('/paciente/procesar-citas', [PacienteCitaController::class, 'procesar'])->name('paciente.citas.procesar');
     Route::post('/paciente/seleccionar', [PacienteCitaController::class, 'seleccionar'])->name('paciente.citas.seleccionar');
     Route::post('/paciente/cancelar', [PacienteCitaController::class, 'cancelar'])->name('paciente.citas.cancelar');
+});
+
+//Rutas para médicos autenticados
+Route::middleware(['auth', 'medico'])->group(function () {
+    //Mostrar la vista del menú del médico
+    Route::view('/menu_medico', 'menu_medico')->name('menu_medico');
+    //  **POR HACER RESTO DE FUNCIONES**
 });
 
 // Rutas para administradores autenticados

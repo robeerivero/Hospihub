@@ -38,7 +38,11 @@ return [
     'guards' => [
         'web' => [
             'driver' => 'session',
-            'provider' => 'users',
+            'provider' => 'pacientes',  // Aquí aseguramos que los pacientes usan la tabla 'pacientes'
+        ],
+        'medico' => [
+            'driver' => 'session',
+            'provider' => 'medicos',  // Y aquí los medicos usan la tabla 'medicos'
         ],
     ],
 
@@ -60,9 +64,13 @@ return [
     */
 
     'providers' => [
-        'users' => [
+        'pacientes' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
+            'model' => App\Models\Paciente::class,  //env('AUTH_MODEL', App\Models\User::class),
+        ],
+        'medicos' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Medico::class,
         ],
 
         // 'users' => [
