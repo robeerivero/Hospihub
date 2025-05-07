@@ -13,10 +13,44 @@ class DepartamentoController extends Controller
         return view('departamentos.index', ['departamentos' => $departamentos]);
     }
 
-    public function form()
+    public function formEliminar()
     {
         return view('eliminar.departamento');
     }
+
+    public function formInsertar()
+    {
+        return view('insertar.departamento');
+    }
+
+    public function insertar(Request $request)
+    {
+        $request->validate([
+            'nombre_hospital' => 'required|string|max:255',
+            'nombre_departamento' => 'required|string|max:255',
+            'ubicacion' => 'required|string|max:255',
+        ]);
+
+        try {
+            DB::statement("CALL Insertar_Departamento(?, ?, ?)", [
+                $request->nombre_hospital,
+                $request->nombre_departamento,
+                $request->ubicacion
+            ]);
+
+            return redirect()->route('departamentos.insertar.form')->with([
+                'mensaje' => 'Departamento registrado correctamente.',
+                'tipo' => 'exito'
+            ]);
+
+        } catch (\Exception $e) {
+            return redirect()->route('departamentos.insertar.form')->with([
+                'mensaje' => 'Error: ' . $e->getMessage(),
+                'tipo' => 'error'
+            ]);
+        }
+    }
+
 
     public function eliminar(Request $request)
     {

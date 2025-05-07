@@ -72,8 +72,19 @@ Route::post('/eliminar/medico', [MedicoController::class, 'eliminar'])->name('me
 Route::get('/eliminar/paciente', [PacienteController::class, 'form'])->name('pacientes.eliminar.form');
 Route::post('/eliminar/paciente', [PacienteController::class, 'eliminar'])->name('pacientes.eliminar');
 
-Route::get('/eliminar/departamento', [DepartamentoController::class, 'form'])->name('departamentos.eliminar.form');
+Route::get('/eliminar/departamento', [DepartamentoController::class, 'formEliminar'])->name('departamentos.eliminar.form');
 Route::post('/eliminar/departamento', [DepartamentoController::class, 'eliminar'])->name('departamentos.eliminar');
+
+//Rutas de inserción
+Route::get('/insertar/hospital', [HospitalController::class, 'formInsertar'])->name('hospitales.insertar.form');
+Route::post('/insertar/hospital', [HospitalController::class, 'insertar'])->name('hospitales.insertar');
+
+Route::get('/insertar/medico', [MedicoController::class, 'formInsertar'])->name('medicos.insertar.form');
+Route::post('/insertar/medico', [MedicoController::class, 'insertar'])->name('medicos.insertar');
+
+Route::get('/insertar/departamento', [DepartamentoController::class, 'formInsertar'])->name('departamentos.insertar.form');
+Route::post('/insertar/departamento', [DepartamentoController::class, 'insertar'])->name('departamentos.insertar');
+
 
 // Ruta para mostrar datos COVID desde la API
 Route::get('/enfermedades/covid', [EnfermedadController::class, 'mostrarCovid'])->name('enfermedades.covid');

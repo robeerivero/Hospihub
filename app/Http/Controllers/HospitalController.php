@@ -13,9 +13,35 @@ class HospitalController extends Controller
         return view('hospitales.index', ['hospitales' => $hospitales]);
     }
 
-    public function form()
+    public function formEliminar()
     {
         return view('eliminar.hospital');
+    }
+
+    public function formInsertar()
+    {
+        return view('insertar.hospital');
+    }
+
+    public function insertar(Request $request)
+    {
+        $nombre = $request->input('nombre');
+        $ciudad = $request->input('ciudad');
+        $calle = $request->input('calle');
+
+        try {
+            DB::statement("CALL Insertar_Hospital(?, ?, ?)", [$nombre, $ciudad, $calle]);
+
+            return redirect()->route('hospitales.insertar.form')->with([
+                'mensaje' => 'Hospital insertado correctamente.',
+                'tipo' => 'exito'
+            ]);
+        } catch (\Illuminate\Database\QueryException $ex) {
+            return redirect()->route('hospitales.insertar.form')->with([
+                'mensaje' => 'Error al insertar hospital: ' . $ex->getMessage(),
+                'tipo' => 'error'
+            ]);
+        }
     }
 
     public function eliminar(Request $request)
