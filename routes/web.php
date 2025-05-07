@@ -6,17 +6,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\CitaController;
 use App\Http\Controllers\PacienteCitaController;
+use App\Http\Controllers\DepartamentoController;
 use App\Http\Controllers\HospitalController;
 use App\Http\Controllers\MedicoController;
 use App\Http\Controllers\PacienteController;
-use App\Http\Controllers\DepartamentoController;
 use App\Http\Controllers\EnfermedadController; // ✅ MOVIDO AQUÍ ARRIBA
 
-// Controladores de eliminación
-use App\Http\Controllers\EliminarHospitalController;
-use App\Http\Controllers\EliminarMedicoController;
-use App\Http\Controllers\EliminarPacienteController;
-use App\Http\Controllers\EliminarDepartamentoController;
 
 // Ruta principal
 Route::get('/', function () {
@@ -68,17 +63,17 @@ Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.
 Route::get('/departamentos', [DepartamentoController::class, 'index'])->name('departamentos.index');
 
 // Rutas para eliminar entidades
-Route::get('/eliminar/hospital', [EliminarHospitalController::class, 'form'])->name('hospitales.eliminar.form');
-Route::post('/eliminar/hospital', [EliminarHospitalController::class, 'eliminar'])->name('hospitales.eliminar');
+Route::get('/eliminar/hospital', [HospitalController::class, 'form'])->name('hospitales.eliminar.form');
+Route::post('/eliminar/hospital', [HospitalController::class, 'eliminar'])->name('hospitales.eliminar');
 
-Route::get('/eliminar/medico', [EliminarMedicoController::class, 'form'])->name('medicos.eliminar.form');
-Route::post('/eliminar/medico', [EliminarMedicoController::class, 'eliminar'])->name('medicos.eliminar');
+Route::get('/eliminar/medico', [MedicoController::class, 'form'])->name('medicos.eliminar.form');
+Route::post('/eliminar/medico', [MedicoController::class, 'eliminar'])->name('medicos.eliminar');
 
-Route::get('/eliminar/paciente', [EliminarPacienteController::class, 'form'])->name('pacientes.eliminar.form');
-Route::post('/eliminar/paciente', [EliminarPacienteController::class, 'eliminar'])->name('pacientes.eliminar');
+Route::get('/eliminar/paciente', [PacienteController::class, 'form'])->name('pacientes.eliminar.form');
+Route::post('/eliminar/paciente', [PacienteController::class, 'eliminar'])->name('pacientes.eliminar');
 
-Route::get('/eliminar/departamento', [EliminarDepartamentoController::class, 'form'])->name('departamentos.eliminar.form');
-Route::post('/eliminar/departamento', [EliminarDepartamentoController::class, 'eliminar'])->name('departamentos.eliminar');
+Route::get('/eliminar/departamento', [DepartamentoController::class, 'form'])->name('departamentos.eliminar.form');
+Route::post('/eliminar/departamento', [DepartamentoController::class, 'eliminar'])->name('departamentos.eliminar');
 
 // Ruta para mostrar datos COVID desde la API
 Route::get('/enfermedades/covid', [EnfermedadController::class, 'mostrarCovid'])->name('enfermedades.covid');
