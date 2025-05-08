@@ -1,169 +1,193 @@
-*{  
-    font-family: "Inter", sans-serif;
-    font-weight: 700;
-    font-style: normal;
-    font-variation-settings:"slnt" 0;
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #3498db;
+    --accent-color: #e74c3c;
+    --background-color: #f5f7fa;
+    --light-color: #ffffff;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Rubik', sans-serif;
 }
 
 body {
-    background-color: #f0f0f0;
-    margin: 0 auto;
+    background-color: var(--background-color);
+    padding-top: 5rem;
+    text-align: center;
 }
 
-/*Header*/
-header {
-    display: flex;
-    justify-content: center; /* Centra horizontalmente */
-    align-items: center; /* Centra verticalmente */
+header nav {
     position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: auto;
-    top: 0%;
-}
-
-nav{
-    background-color: #52ee57;
-    width: 100%;
-    height: 5em;
-}
-
-
-#logo{
-    color: #ffffff;
-    font-size: 3em;
-    padding-top: 0.3em;
+    background-color: var(--primary-color);
+    padding: 1rem 0;
+    box-shadow: 0 4px 10px var(--shadow-color);
+    z-index: 1000;
     text-align: center;
 }
 
-
-h1 {
-    text-align: center;
-    color: #52ee57;
-}
-
-p {
-    font-size: 18px;
+#logo {
+    color: white;
+    font-size: 2.2rem;
     font-weight: bold;
-    color: #333;
-}
-
-ul {
-    list-style: none;
     margin: 0;
-    padding: 0;
 }
 
-li {
-    margin-bottom: 10px;
+
+/* Títulos */
+h1, h2 {
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
 }
 
-a {
-    display: block;
-    padding: 10px;
-    background-color: #8ef891;
-    color: #fff;
-    text-align: center;
-    text-decoration: none;
-    border-radius: 5px;
-    margin-right: 250px;
-    margin-left: 250px;
+.container {
+    margin-top: 2rem;
 }
 
-a:hover {
-    background-color: #52ee57;
-}
-
+/* Tabla de departamentos */
 table {
-    border-collapse: collapse;
-    margin-top: 6em;
-    margin: 20px auto;
     width: 100%;
-    max-width: 1000px;
-    background-color: #fff;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-}
-
-th {
-    background-color: #52ee57;
-    color: #fff;
-    padding: 10px;
-}
-
-td {
-    border: 1px solid #ddd;
-    padding: 10px;
-}
-
-tr:nth-child(even) {
-    background-color: #f2f2f2;
-}
-
-.table-striped tbody tr:nth-of-type(odd) {
-    background-color: rgba(0,0,0,.05);
-}
-
-.contenedor{
-    text-align: center;
-    width: 100%;
-    height: 6em;
-    margin-top: 10em;
-    box-shadow: 2px 2px 10px rgb(83, 81, 81);
-}
-
-
-#formulario{
-    padding-top: 1em;
-    padding-right: 0em auto;
-    text-align: left;
-    color: black;
-    border: 2px solid black;
-    width: 40%;
-    height: auto;
-    font-size: 1.2em;
-    margin: 0 auto; /* Centra horizontalmente */
-    box-shadow: 2px 2px 10px rgb(83, 81, 81);
+    margin-top: 2rem;
+    background-color: var(--light-color);
+    box-shadow: 0 6px 15px var(--shadow-color);
     border-radius: 10px;
+    overflow: hidden;
 }
 
-label{
-    padding-left: 0.7em;
-}
-
-button{
-    padding: 0.5em;
-    font-size: 1em;
-    width: 100%;
-    display: block; /* Convertir el botón en un elemento de bloque */
-    margin: 0 auto; /* Centrar horizontalmente */
-    background-color: #8ef891;
-    border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
-    border: 0px solid black;
-    border-top: 2px solid black;
-}
-
-button:hover{
-    background-color: #52ee57;
-}
-
-input{
-    margin-top: 0.5em;
-    margin-left: 1em;
-    width: calc(100% - 2.5em);
-}
-
-a {
-    display: block;
-    padding: 10px;
-    background-color: #8ef891;
-    color: #fff;
+table th, table td {
+    padding: 1rem;
     text-align: center;
-    text-decoration: none;
-    border-radius: 5px;
-    margin-right: 250px;
-    margin-left: 250px;
+    border-bottom: 1px solid #ddd;
 }
 
-a:hover {
-    background-color: #52ee57;
+table th {
+    background-color: var(--secondary-color);
+    color: white;
+    font-weight: bold;
+}
+
+table tr:hover {
+    background-color: #eef2f7;
+}
+
+/* Botón de "Seleccionar" en tabla */
+table a {
+    display: inline-block;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+table a:hover {
+    background-color: var(--accent-color);
+}
+
+/* Formulario de búsqueda */
+#contenedor {
+    background-color: var(--light-color);
+    max-width: 600px;
+    margin: 3rem auto;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 20px var(--shadow-color);
+    text-align: left;
+}
+
+form label {
+    font-weight: 600;
+    color: var(--primary-color);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+form input[type="text"],
+form input[type="date"] {
+    width: 100%;
+    padding: 0.9rem;
+    margin-bottom: 1.2rem;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: var(--background-color);
+    transition: 0.3s;
+}
+
+form input:focus {
+    border-color: var(--secondary-color);
+    background-color: white;
+    outline: none;
+}
+
+button[type="submit"] {
+    width: 100%;
+    padding: 1rem;
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+button[type="submit"]:hover {
+    background-color: var(--accent-color);
+    transform: translateY(-2px);
+}
+
+/* Enlace de regreso */
+a[href*="menu-paciente"] {
+    margin-top: 2rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: 0.3s;
+}
+
+a[href*="menu-paciente"]:hover {
+    color: var(--accent-color);
+}
+
+.material-symbols-outlined {
+    font-size: 1.4rem;
+    vertical-align: middle;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    table, th, td {
+        font-size: 0.9rem;
+    }
+
+    h1, h2 {
+        font-size: 1.6rem;
+    }
+
+    #logo {
+        font-size: 1.7rem;
+    }
+
+    #contenedor {
+        margin: 2rem 1rem;
+        padding: 2rem;
+    }
+
+    button[type="submit"] {
+        font-size: 1rem;
+    }
 }

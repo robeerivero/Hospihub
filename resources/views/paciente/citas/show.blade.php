@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-    <link rel="stylesheet" href="{{ asset('css/ver-detalles-cita.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/detalle-cita.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
@@ -67,6 +67,9 @@
     </div>
 
     <div class="text-center mt-4">
+        <a href="{{ route('paciente.citas.pdf', $cita->Id_cita) }}" class="btn btn-success">
+            <span class="material-symbols-outlined">download</span> Descargar PDF
+        </a>
         <a href="{{ route('paciente.citas.index') }}" class="btn btn-outline-primary me-2">
             <span class="material-symbols-outlined">arrow_left_alt</span> Volver a las citas
         </a>

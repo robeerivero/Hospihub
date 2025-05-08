@@ -40,6 +40,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     Route::post('/paciente/procesar-citas', [PacienteCitaController::class, 'procesar'])->name('paciente.citas.procesar');
     Route::post('/paciente/seleccionar', [PacienteCitaController::class, 'seleccionar'])->name('paciente.citas.seleccionar');
     Route::post('/paciente/cancelar', [PacienteCitaController::class, 'cancelar'])->name('paciente.citas.cancelar');
+    Route::get('/paciente/citas/{id}/pdf', [PacienteCitaController::class, 'descargarPDF'])->name('paciente.citas.pdf');
 //});
 
 //Rutas para médicos autenticados

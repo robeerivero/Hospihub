@@ -6,9 +6,32 @@ use Illuminate\Http\Request;
 use App\Models\Hospital;
 use App\Models\Departamento;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PacienteCitaController extends Controller
 {
+    public function descargarPDF($id)
+    {
+        $cita = DB::selectOne("
+            SELECT c.Id_cita, c.Fecha, DATE_FORMAT(c.Hora, '%H:%i') AS Hora,
+                m.Nombre AS Nombre_Medico, m.Apellidos AS Apellidos_Medico,
+                d.Nombre AS Departamento, h.Nombre AS Hospital
+            FROM Cita c
+            JOIN Medico m ON c.Id_medico = m.Id_medico
+            JOIN Departamento d ON m.Id_departamento = d.Id_departamento
+            JOIN Hospital h ON d.Id_hospital = h.Id_hospital
+            WHERE c.Id_cita = ?
+        ", [$id]);
+
+
+        $diagnostico = DB::selectOne("CALL ObtenerDiagnosticoPorCita(?)", [$id]);
+        DB::statement("SET @dummy = 0");
+        $medicamentos = DB::select("CALL ObtenerMedicamentosPorCita(?)", [$id]);
+
+        $pdf = Pdf::loadView('paciente.citas.pdf', compact('cita', 'diagnostico', 'medicamentos'));
+        
+        return $pdf->download('cita_detalles.pdf');
+    }
     public function index()
     {
         $paciente_id = auth()->user()->Id_paciente; // Usa Id_paciente, no id
@@ -20,14 +43,16 @@ class PacienteCitaController extends Controller
     public function show($id)
     {
         $cita = DB::selectOne("
-            SELECT c.Fecha, DATE_FORMAT(c.Hora, '%H:%i') AS Hora, m.Nombre AS Nombre_Medico, m.Apellidos AS Apellidos_Medico,
-                   d.Nombre AS Departamento, h.Nombre AS Hospital
+            SELECT c.Id_cita, c.Fecha, DATE_FORMAT(c.Hora, '%H:%i') AS Hora,
+                m.Nombre AS Nombre_Medico, m.Apellidos AS Apellidos_Medico,
+                d.Nombre AS Departamento, h.Nombre AS Hospital
             FROM Cita c
             JOIN Medico m ON c.Id_medico = m.Id_medico
             JOIN Departamento d ON m.Id_departamento = d.Id_departamento
             JOIN Hospital h ON d.Id_hospital = h.Id_hospital
             WHERE c.Id_cita = ?
         ", [$id]);
+
 
         $diagnostico = DB::selectOne("CALL ObtenerDiagnosticoPorCita(?)", [$id]);
         DB::statement("SET @dummy = 0");
