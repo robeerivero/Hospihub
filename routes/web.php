@@ -63,6 +63,8 @@ Route::middleware('auth:web')->group(function () {
     Route::post('/insertar/hospital', [HospitalController::class, 'insertar'])->name('hospitales.insertar');
     Route::get('/insertar/medico', [MedicoController::class, 'formInsertar'])->name('medicos.insertar.form');
     Route::post('/insertar/medico', [MedicoController::class, 'insertar'])->name('medicos.insertar');
+    Route::get('/insertar/paciente', [PacienteController::class, 'formInsertar'])->name('pacientes.insertar.form');
+    Route::post('/insertar/paciente', [PacienteController::class, 'insertar'])->name('pacientes.insertar');
     Route::get('/insertar/departamento', [DepartamentoController::class, 'formInsertar'])->name('departamentos.insertar.form');
     Route::post('/insertar/departamento', [DepartamentoController::class, 'insertar'])->name('departamentos.insertar');
 });

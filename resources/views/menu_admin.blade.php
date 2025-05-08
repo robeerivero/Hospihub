@@ -6,10 +6,16 @@
     <!--           ConveyThis Script End         -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🏥 Menú de Admnistradores</title>
+    <title>🏥 Menú de Administradores</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .custom-container {
+            max-width: 800px;  /* Establecer el ancho máximo */
+            margin: 0 auto;    /* Centrar el contenedor */
+        }
+    </style>
 </head>
-<body class="d-flex align-items-center justify-content-center vh-100 bg-light">
+<body class="bg-light">
 
     <!-- Notificación (Toast) -->
     @if(session('success'))
@@ -25,29 +31,45 @@
     </div>
     @endif
 
-    <div class="text-center p-5 bg-white shadow rounded w-50">
-        <h1 class="mb-3">Bienvenido, Admin 👑 </h1>
-        <p class="mb-4">Selecciona una opción de gestión: </p>
+    <div class="custom-container py-5">
+        <!-- Contenido principal -->
+        <div class="text-center p-5 bg-white shadow rounded">
+            <h1 class="mb-3">Bienvenido, Admin 👑 </h1>
+            <p class="mb-4">Selecciona una opción de gestión: </p>
 
-        <h3 class="mt-4">🗑️ Eliminar registros</h3>
-        <div class="d-grid gap-3">
-            <a href="{{ route('hospitales.eliminar.form') }}" class="btn btn-danger">🏥 Eliminar Hospital</a>
-            <a href="{{ route('medicos.eliminar.form') }}" class="btn btn-danger">👨‍⚕️ Eliminar Médico</a>
-            <a href="{{ route('pacientes.eliminar.form') }}" class="btn btn-danger">🧑‍⚕️ Eliminar Paciente</a>
-            <a href="{{ route('departamentos.eliminar.form') }}" class="btn btn-danger">📍 Eliminar Departamento</a>
+            <!-- Ver registros -->
+            <h3 class="mt-4">👀 Ver registros</h3>
+            <div class="d-grid gap-3">
+                <a href="{{ route('hospitales.index') }}" class="btn btn-info">🏥 Ver Hospitales</a>
+                <a href="{{ route('medicos.index') }}" class="btn btn-info">👨‍⚕️ Ver Médicos</a>
+                <a href="{{ route('pacientes.index') }}" class="btn btn-info">🧑‍⚕️ Ver Pacientes</a>
+                <a href="{{ route('departamentos.index') }}" class="btn btn-info">📍 Ver Departamentos</a>
+            </div>
+
+            <!-- Eliminar registros -->
+            <h3 class="mt-4">🗑️ Eliminar registros</h3>
+            <div class="d-grid gap-3">
+                <a href="{{ route('hospitales.eliminar.form') }}" class="btn btn-danger">🏥 Eliminar Hospital</a>
+                <a href="{{ route('medicos.eliminar.form') }}" class="btn btn-danger">👨‍⚕️ Eliminar Médico</a>
+                <a href="{{ route('pacientes.eliminar.form') }}" class="btn btn-danger">🧑‍⚕️ Eliminar Paciente</a>
+                <a href="{{ route('departamentos.eliminar.form') }}" class="btn btn-danger">📍 Eliminar Departamento</a>
+            </div>
+
+            <!-- Insertar registros -->
+            <h3 class="mt-4">➕ Insertar registros</h3>
+            <div class="d-grid gap-3">
+                <a href="{{ route('hospitales.insertar.form') }}" class="btn btn-success">🏥 Insertar Hospital</a>
+                <a href="{{ route('medicos.insertar.form') }}" class="btn btn-success">👨‍⚕️ Insertar Médico</a>
+                <a href="{{ route('pacientes.insertar.form') }}" class="btn btn-success">👨‍⚕️ Insertar Paciente</a>
+                <a href="{{ route('departamentos.insertar.form') }}" class="btn btn-success">📍 Insertar Departamento</a>
+            </div>
+
+            <!-- Cerrar sesión -->
+            <form action="{{ route('logout') }}" method="POST" class="mt-4">
+                @csrf
+                <button type="submit" class="btn btn-secondary">❌ Cerrar Sesión</button>
+            </form>
         </div>
-
-        <h3 class="mt-4">➕ Insertar registros</h3>
-        <div class="d-grid gap-3">
-            <a href="{{ route('hospitales.insertar.form') }}" class="btn btn-success">🏥 Insertar Hospital</a>
-            <a href="{{ route('medicos.insertar.form') }}" class="btn btn-success">👨‍⚕️ Insertar Médico</a>
-            <a href="{{ route('departamentos.insertar.form') }}" class="btn btn-success">📍 Insertar Departamento</a>
-        </div>
-
-        <form action="{{ route('logout') }}" method="POST" class="mt-4">
-            @csrf
-            <button type="submit" class="btn btn-secondary">❌ Cerrar Sesión</button>
-        </form>
     </div>
 
     <!-- Script para mostrar el Toast automáticamente -->
