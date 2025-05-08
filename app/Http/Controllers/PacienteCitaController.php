@@ -7,22 +7,26 @@ use App\Models\Hospital;
 use App\Models\Departamento;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class PacienteCitaController extends Controller
+class PacienteCitaController extends Controller implements HasMiddleware
 {
-    public function __construct()
+    // Nuevo uso de HasMiddleware en Laravel 11^
+    // El constructor no funciona para versiones posteriores de laravel 11
+    public static function middleware(): array
     {
-        // Middleware auth obligatorio
-        $this->middleware('auth:web');
-
-        // Verificar que el usuario sea un Paciente
-        $this->middleware(function ($request, $next) {
-            if (!auth()->user() instanceof \App\Models\Paciente) {
-                abort(403, 'Acceso no autorizado.');
-            }
-            return $next($request);
-        });
+        return [
+            new Middleware('auth:web'),
+            new Middleware(function ($request, $next) {
+                if (!auth()->user() instanceof \App\Models\Paciente) {
+                    abort(403, 'Acceso no autorizado.');
+                }
+                return $next($request);
+            }),
+        ];
     }
+
     public function descargarPDF($id)
     {
         $cita = DB::selectOne("
@@ -45,6 +49,7 @@ class PacienteCitaController extends Controller
         
         return $pdf->download('cita_detalles.pdf');
     }
+
     public function index()
     {
         $paciente_id = auth()->user()->Id_paciente; // Usa Id_paciente, no id
@@ -65,7 +70,6 @@ class PacienteCitaController extends Controller
             JOIN Hospital h ON d.Id_hospital = h.Id_hospital
             WHERE c.Id_cita = ?
         ", [$id]);
-
 
         $diagnostico = DB::selectOne("CALL ObtenerDiagnosticoPorCita(?)", [$id]);
         DB::statement("SET @dummy = 0");

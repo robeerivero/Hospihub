@@ -50,7 +50,7 @@
     </form>
 </div>
 
-<a href="{{ url('/menu-admin') }}" class="btn-volver">
+<a href="{{ url('/menu_admin') }}" class="btn-volver">
     Regresar al menú del administrador
     <span class="material-symbols-outlined">arrow_left_alt</span>
 </a>

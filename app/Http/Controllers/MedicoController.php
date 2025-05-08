@@ -92,4 +92,3 @@ class MedicoController extends Controller
         return back()->with(['mensaje' => $mensaje, 'tipo' => $tipo]);
     }
 }
-
