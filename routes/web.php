@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-// Controladores generales
+// Controladores
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\CitaController;
 use App\Http\Controllers\PacienteCitaController;
@@ -10,30 +10,29 @@ use App\Http\Controllers\DepartamentoController;
 use App\Http\Controllers\HospitalController;
 use App\Http\Controllers\MedicoController;
 use App\Http\Controllers\PacienteController;
-use App\Http\Controllers\EnfermedadController; // ✅ MOVIDO AQUÍ ARRIBA
-
+use App\Http\Controllers\EnfermedadController;
 
 // Ruta principal
 Route::get('/', function () {
     return view('home');
 });
 
-//Mostrar la vista de registro
+// Mostrar la vista de registro
 Route::view('/registro', 'registro')->name('registro');
-//Guardar el registro de un paciente
+// Guardar el registro de un paciente
 Route::post('/registro', [PacienteController::class, 'registrar'])->name('registro');
 
-//Mostrar la vista de login
+// Mostrar la vista de login
 Route::get('/login', [LoginController::class, 'mostrarFormularioLogin'])->name('login');
-//Iniciar sesión
+// Iniciar sesión
 Route::post('/login', [LoginController::class, 'login'])->name('login');
-//Cerrar sesión
+// Cerrar sesión
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Rutas para pacientes autenticados
-//Route::middleware(['auth', 'paciente'])->group(function () {
-    //Mostrar la vista del menú del paciente
-    Route::view('menu_paciente', 'menu_paciente')->name('menu_paciente');
+Route::middleware('auth:web')->group(function () {
+    // Mostrar el menú del paciente
+    Route::view('/menu_paciente', 'menu_paciente')->name('menu_paciente');
     Route::get('/paciente/citas', [PacienteCitaController::class, 'index'])->name('paciente.citas.index');
     Route::get('/paciente/citas/{id}', [PacienteCitaController::class, 'show'])->name('paciente.citas.show');
     Route::get('/paciente/elegir', [PacienteCitaController::class, 'formElegir'])->name('paciente.citas.elegir');
@@ -41,29 +40,15 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     Route::post('/paciente/seleccionar', [PacienteCitaController::class, 'seleccionar'])->name('paciente.citas.seleccionar');
     Route::post('/paciente/cancelar', [PacienteCitaController::class, 'cancelar'])->name('paciente.citas.cancelar');
     Route::get('/paciente/citas/{id}/pdf', [PacienteCitaController::class, 'descargarPDF'])->name('paciente.citas.pdf');
-//});
-
-//Rutas para médicos autenticados
-Route::middleware(['auth', 'medico'])->group(function () {
-    //Mostrar la vista del menú del médico
-    Route::view('/menu_medico', 'menu_medico')->name('menu_medico');
-    //  **POR HACER RESTO DE FUNCIONES**
 });
 
-// Rutas para administradores autenticados
-Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
-    Route::get('citas', [CitaController::class, 'index'])->name('admin.citas.index');
-    Route::post('citas/crear', [CitaController::class, 'crearTodas'])->name('admin.citas.crearTodas');
-    Route::delete('citas/eliminar', [CitaController::class, 'eliminarTodas'])->name('admin.citas.eliminarTodas');
-});
-
-// Rutas de visualización
+// Rutas de visualización públicas
 Route::get('/hospitales', [HospitalController::class, 'index'])->name('hospitales.index');
 Route::get('/medicos', [MedicoController::class, 'index'])->name('medicos.index');
 Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.index');
 Route::get('/departamentos', [DepartamentoController::class, 'index'])->name('departamentos.index');
 
-// Rutas para eliminar entidades
+// Rutas de eliminación de entidades
 Route::get('/eliminar/hospital', [HospitalController::class, 'form'])->name('hospitales.eliminar.form');
 Route::post('/eliminar/hospital', [HospitalController::class, 'eliminar'])->name('hospitales.eliminar');
 
@@ -76,7 +61,7 @@ Route::post('/eliminar/paciente', [PacienteController::class, 'eliminar'])->name
 Route::get('/eliminar/departamento', [DepartamentoController::class, 'formEliminar'])->name('departamentos.eliminar.form');
 Route::post('/eliminar/departamento', [DepartamentoController::class, 'eliminar'])->name('departamentos.eliminar');
 
-//Rutas de inserción
+// Rutas de inserción
 Route::get('/insertar/hospital', [HospitalController::class, 'formInsertar'])->name('hospitales.insertar.form');
 Route::post('/insertar/hospital', [HospitalController::class, 'insertar'])->name('hospitales.insertar');
 
@@ -86,6 +71,5 @@ Route::post('/insertar/medico', [MedicoController::class, 'insertar'])->name('me
 Route::get('/insertar/departamento', [DepartamentoController::class, 'formInsertar'])->name('departamentos.insertar.form');
 Route::post('/insertar/departamento', [DepartamentoController::class, 'insertar'])->name('departamentos.insertar');
 
-
-// Ruta para mostrar datos COVID desde la API
+// Ruta para mostrar datos de COVID
 Route::get('/enfermedades/covid', [EnfermedadController::class, 'mostrarCovid'])->name('enfermedades.covid');

@@ -10,6 +10,19 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class PacienteCitaController extends Controller
 {
+    public function __construct()
+    {
+        // Middleware auth obligatorio
+        $this->middleware('auth:web');
+
+        // Verificar que el usuario sea un Paciente
+        $this->middleware(function ($request, $next) {
+            if (!auth()->user() instanceof \App\Models\Paciente) {
+                abort(403, 'Acceso no autorizado.');
+            }
+            return $next($request);
+        });
+    }
     public function descargarPDF($id)
     {
         $cita = DB::selectOne("
