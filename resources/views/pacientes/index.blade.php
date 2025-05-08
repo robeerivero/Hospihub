@@ -5,6 +5,11 @@
     <title>HospiHub - Lista de Pacientes</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
     <link rel="stylesheet" href="{{ asset('css/citas.css') }}">
+    <style>
+        .table {
+            width: 90%;
+        }
+    </style>
 </head>
 <body>
     <header><nav><div id="logo">HospiHub</div></nav></header>
@@ -22,7 +27,7 @@
                 <th>Ciudad</th>
                 <th>Calle</th>
                 <th>Email</th>
-                <th>PIN</th>
+                <!--<th>PIN</th>-->
                 <th></th>
             </tr>
         </thead>
@@ -37,14 +42,14 @@
                     <td>{{ $pac->Ciudad }}</td>
                     <td>{{ $pac->Calle }}</td>
                     <td>{{ $pac->Email }}</td>
-                    <td>{{ $pac->PIN }}</td>
+                    <!--<td>{{ $pac->PIN }}</td>-->
                     <td><a href="{{ url('/editar/editar-paciente/' . $pac->Id_paciente) }}" class="btn-accion">Editar</a></td>
                 </tr>
             @endforeach
         </tbody>
     </table>
 
-    <a href="{{ url('/menu-admin') }}">
+    <a href="{{ url('/menu_admin') }}">
         Regresar al menú del administrador <span class="material-symbols-outlined">arrow_left_alt</span>
     </a>
 </body>

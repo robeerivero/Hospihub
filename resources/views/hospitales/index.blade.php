@@ -6,27 +6,10 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
     <link rel="stylesheet" href="{{ asset('css/citas.css') }}">
     <style>
-    th:last-child, td:last-child {
-        width: 1%;
-        white-space: nowrap;
-        padding: 6px;
-    }
-    .btn-accion {
-        display: inline-block;
-        padding: 4px 8px;
-        font-size: 14px;
-        background: #58ec54;
-        color: white;
-        text-decoration: none;
-        border-radius: 3px;
-        transition: background 0.3s;
-        margin: 2px;
-    }
-    .btn-accion:hover {
-        background: #45c042;
-    }
-</style>
-
+        .table {
+            width: 60%;
+        }
+    </style>
 </head>
 <body>
     <header><nav><div id="logo">HospiHub</div></nav></header>
@@ -50,15 +33,13 @@
                     <td>{{ $hosp->Nombre_hospital }}</td>
                     <td>{{ $hosp->Ciudad_hospital }}</td>
                     <td>{{ $hosp->Calle_hospital }}</td>
-                    <td>
-                        <a href="{{ url('/editar/editar-hospital/' . $hosp->Id_hospital) }}" class="btn-accion">Editar</a>
-                    </td>
+                    <td><a href="{{ url('/editar/editar-hospital/' . $hosp->Id_hospital) }}" class="btn-accion">Editar</a></td>
                 </tr>
             @endforeach
         </tbody>
     </table>
 
-    <a href="{{ url('/menu-admin') }}">
+    <a href="{{ url('/menu_admin') }}">
         Regresar al menú del administrador <span class="material-symbols-outlined">arrow_left_alt</span>
     </a>
 </body>

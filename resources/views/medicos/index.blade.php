@@ -50,7 +50,7 @@
         </tbody>
     </table>
 
-    <a href="{{ url('/menu-admin') }}">
+    <a href="{{ url('/menu_admin') }}">
         Regresar al menú del administrador <span class="material-symbols-outlined">arrow_left_alt</span>
     </a>
 </body>

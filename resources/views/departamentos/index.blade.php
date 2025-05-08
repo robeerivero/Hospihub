@@ -5,6 +5,11 @@
     <title>HospiHub - Lista de Departamentos</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
     <link rel="stylesheet" href="{{ asset('css/citas.css') }}">
+    <style>
+        .table {
+            width: 90%;
+        }
+    </style>
 </head>
 <body>
     <header><nav><div id="logo">HospiHub</div></nav></header>
@@ -40,7 +45,7 @@
         </tbody>
     </table>
 
-    <a href="{{ url('/menu-admin') }}">
+    <a href="{{ url('/menu_admin') }}">
         Regresar al menú del administrador <span class="material-symbols-outlined">arrow_left_alt</span>
     </a>
 </body>
