@@ -3,13 +3,15 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Hospital;
+use App\Models\Departamento;
 use Illuminate\Support\Facades\DB;
 
 class PacienteCitaController extends Controller
 {
     public function index()
     {
-        $paciente_id = auth()->user()->id;
+        $paciente_id = auth()->user()->Id_paciente; // Usa Id_paciente, no id
         $citas = DB::select("CALL Obtener_Citas_Paciente(?)", [$paciente_id]);
 
         return view('paciente.citas.index', compact('citas'));
@@ -36,8 +38,8 @@ class PacienteCitaController extends Controller
 
     public function formElegir()
     {
-        $hospitales = DB::table('Hospital')->get();
-        $departamentos = DB::table('Departamento')->get();
+        $hospitales = Hospital::all();
+        $departamentos = Departamento::all();
 
         return view('paciente.citas.elegir', compact('hospitales', 'departamentos'));
     }
@@ -70,7 +72,7 @@ class PacienteCitaController extends Controller
             'cita_id' => 'required|integer',
         ]);
 
-        $paciente_id = auth()->user()->id;
+        $paciente_id = auth()->user()->Id_paciente;
 
         DB::table('Cita')->where('Id_Cita', $request->cita_id)
             ->update([
@@ -81,13 +83,14 @@ class PacienteCitaController extends Controller
         return redirect()->route('paciente.citas.index')->with('success', 'Cita seleccionada correctamente.');
     }
 
+
     public function cancelar(Request $request)
     {
         $request->validate([
             'cita_id' => 'required|integer',
         ]);
 
-        DB::table('Cita')->where('Id_Cita', $request->cita_id)
+        DB::table('Cita')->where('Id_cita', $request->cita_id)
             ->update([
                 'Id_paciente' => null,
                 'Estado' => 'Disponible',

@@ -30,8 +30,8 @@
         <p class="mb-4">Selecciona una opción para gestionar tu cuenta: </p>
 
         <div class="d-grid gap-3">
-            <a href="{{ route('/paciente/elegir') }}" class="btn btn-primary">🩺 Pedir Cita</a>
-            <a href="{{ route('/paciente/citas') }}" class="btn btn-success">📅 Gestionar mis Citas</a>
+            <a href="{{ route('paciente.citas.elegir') }}" class="btn btn-primary">🩺 Pedir Cita</a>
+            <a href="{{ route('paciente.citas.index') }}" class="btn btn-success">📅 Gestionar mis Citas</a>
             <a href="{{ route('logout') }}" class="btn btn-danger">❌ Cerrar Sesión</a>
         </div>
     </div>

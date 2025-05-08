@@ -31,7 +31,7 @@ Route::post('/login', [LoginController::class, 'login'])->name('login');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Rutas para pacientes autenticados
-Route::middleware(['auth', 'paciente'])->group(function () {
+//Route::middleware(['auth', 'paciente'])->group(function () {
     //Mostrar la vista del menú del paciente
     Route::view('menu_paciente', 'menu_paciente')->name('menu_paciente');
     Route::get('/paciente/citas', [PacienteCitaController::class, 'index'])->name('paciente.citas.index');
@@ -40,7 +40,7 @@ Route::middleware(['auth', 'paciente'])->group(function () {
     Route::post('/paciente/procesar-citas', [PacienteCitaController::class, 'procesar'])->name('paciente.citas.procesar');
     Route::post('/paciente/seleccionar', [PacienteCitaController::class, 'seleccionar'])->name('paciente.citas.seleccionar');
     Route::post('/paciente/cancelar', [PacienteCitaController::class, 'cancelar'])->name('paciente.citas.cancelar');
-});
+//});
 
 //Rutas para médicos autenticados
 Route::middleware(['auth', 'medico'])->group(function () {
