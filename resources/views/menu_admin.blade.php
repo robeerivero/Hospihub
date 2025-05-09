@@ -46,15 +46,6 @@
                 <a href="{{ route('departamentos.index') }}" class="btn btn-info">📍 Ver Departamentos</a>
             </div>
 
-            <!-- Eliminar registros -->
-            <h3 class="mt-4">🗑️ Eliminar registros</h3>
-            <div class="d-grid gap-3">
-                <a href="{{ route('hospitales.eliminar.form') }}" class="btn btn-danger">🏥 Eliminar Hospital</a>
-                <a href="{{ route('medicos.eliminar.form') }}" class="btn btn-danger">👨‍⚕️ Eliminar Médico</a>
-                <a href="{{ route('pacientes.eliminar.form') }}" class="btn btn-danger">🧑‍⚕️ Eliminar Paciente</a>
-                <a href="{{ route('departamentos.eliminar.form') }}" class="btn btn-danger">📍 Eliminar Departamento</a>
-            </div>
-
             <!-- Insertar registros -->
             <h3 class="mt-4">➕ Insertar registros</h3>
             <div class="d-grid gap-3">
@@ -62,6 +53,15 @@
                 <a href="{{ route('medicos.insertar.form') }}" class="btn btn-success">👨‍⚕️ Insertar Médico</a>
                 <a href="{{ route('pacientes.insertar.form') }}" class="btn btn-success">👨‍⚕️ Insertar Paciente</a>
                 <a href="{{ route('departamentos.insertar.form') }}" class="btn btn-success">📍 Insertar Departamento</a>
+            </div>
+
+            <!-- Eliminar registros -->
+            <h3 class="mt-4">🗑️ Eliminar registros</h3>
+            <div class="d-grid gap-3">
+                <a href="{{ route('hospitales.eliminar.form') }}" class="btn btn-danger">🏥 Eliminar Hospital</a>
+                <a href="{{ route('medicos.eliminar.form') }}" class="btn btn-danger">👨‍⚕️ Eliminar Médico</a>
+                <a href="{{ route('pacientes.eliminar.form') }}" class="btn btn-danger">🧑‍⚕️ Eliminar Paciente</a>
+                <a href="{{ route('departamentos.eliminar.form') }}" class="btn btn-danger">📍 Eliminar Departamento</a>
             </div>
 
             <!-- Cerrar sesión -->

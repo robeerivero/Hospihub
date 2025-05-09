@@ -33,7 +33,7 @@
                     <td>{{ $hosp->Nombre_hospital }}</td>
                     <td>{{ $hosp->Ciudad_hospital }}</td>
                     <td>{{ $hosp->Calle_hospital }}</td>
-                    <td><a href="{{ url('/editar/editar-hospital/' . $hosp->Id_hospital) }}" class="btn-accion">Editar</a></td>
+                    <td><a href="{{ url('/editar/hospital/' . $hosp->Id_hospital) }}" class="btn-accion">Editar</a></td>
                 </tr>
             @endforeach
         </tbody>

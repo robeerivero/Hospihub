@@ -39,7 +39,7 @@
                     <td>{{ $dep->Nombre_hospital }}</td>
                     <td>{{ $dep->Ciudad_hospital }}</td>
                     <td>{{ $dep->Calle_hospital }}</td>
-                    <td><a href="{{ url('/editar/editar-departamento/' . $dep->Id_departamento) }}" class="btn-accion">Editar</a></td>
+                    <td><a href="{{ url('/editar/departamento/' . $dep->Id_departamento) }}" class="btn-accion">Editar</a></td>
                 </tr>
             @endforeach
         </tbody>

@@ -26,6 +26,71 @@ class PacienteController extends Controller
         return view('insertar.paciente');
     }
 
+    public function formEditar($id)
+    {
+        // Obtener los datos del paciente usando su ID
+        $paciente = DB::select("CALL Obtener_Pacientes_Cursor(?)", [$id]);
+
+        // Si el paciente no existe, redirigir con mensaje de error
+        if (!$paciente) {
+            return redirect()->route('pacientes.index')->with('error', 'Paciente no encontrado');
+        }
+
+        // Pasar los datos a la vista
+        return view('editar.paciente', ['paciente' => $paciente[0]]);
+    }
+
+    public function editar(Request $request, $id)
+    {
+        // Validar los datos del formulario
+        $request->validate([
+            'Nombre' => 'required|string|max:255',
+            'Apellidos' => 'required|string|max:255',
+            'Telefono' => 'required|string|max:255',
+            'Fecha_nacimiento' => 'required|date',
+            'Ciudad' => 'required|string|max:255',
+            'Calle' => 'required|string|max:255',
+            'Email' => 'required|string|email|max:255',
+            'PIN' => 'required|string|min:4|max:4'
+        ]);
+
+        // Obtener los datos del formulario
+        $nombre = $request->input('Nombre');
+        $apellidos = $request->input('Apellidos');
+        $telefono = $request->input('Telefono');
+        $fechaNacimiento = $request->input('Fecha_nacimiento');
+        $ciudad = $request->input('Ciudad');
+        $calle = $request->input('Calle');
+        $email = $request->input('Email');
+        $pin = bcrypt($request->input('PIN')); // Hashear el PIN
+
+        try {
+            // Intentar con Eloquent para actualizar los datos
+            $paciente = Paciente::findOrFail($id);
+            $paciente->Nombre = $nombre;
+            $paciente->Apellidos = $apellidos;
+            $paciente->Telefono = $telefono;
+            $paciente->Fecha_nacimiento = $fechaNacimiento;
+            $paciente->Ciudad = $ciudad;
+            $paciente->Calle = $calle;
+            $paciente->Email = $email;
+            $paciente->PIN = $pin;
+
+            $paciente->save(); // Guardar los cambios
+
+            return redirect()->route('pacientes.index')->with([
+                'mensaje' => 'Paciente actualizado correctamente.',
+                'tipo' => 'exito'
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            return redirect()->route('pacientes.editar.form', $id)->with([
+                'mensaje' => 'Error al actualizar el paciente: ' . $e->getMessage(),
+                'tipo' => 'error'
+            ]);
+        }
+    }
+
+
     public function insertar(Request $request)
     {
         // Recuperar los datos del formulario

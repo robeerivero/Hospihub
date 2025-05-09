@@ -23,6 +23,51 @@ class DepartamentoController extends Controller
         return view('insertar.departamento');
     }
 
+    public function formEditar($id)
+    {
+        $departamento = DB::select("CALL Obtener_Departamentos_Hospitales_Cursor(?)", [$id]);
+
+        if (!$departamento) {
+            return redirect()->route('departamentos.index')->with('error', 'Departamento no encontrado');
+        }
+
+        return view('editar.departamento', ['departamento' => $departamento[0]]);
+    }
+
+    public function editar(Request $request, $id)
+    {
+        // Validar los datos del formulario
+        $request->validate([
+            'nombre_hospital' => 'required|string|max:255',
+            'nombre' => 'required|string|max:255',
+            'ubicacion' => 'required|string|max:255',
+        ]);
+
+        // Recuperar los datos del formulario
+        $nombre_hospital = $request->input('nombre_hospital');
+        $nombre_departamento = $request->input('nombre');
+        $ubicacion = $request->input('ubicacion');
+
+        try {
+            // Llamada al procedimiento almacenado para actualizar el departamento
+            DB::statement("CALL Editar_Departamento(?, ?, ?, ?)", [$id, $nombre_hospital, $nombre_departamento, $ubicacion]);
+
+            // Redirigir con un mensaje de éxito
+            return redirect()->route('departamentos.index')->with([
+                'mensaje' => 'Departamento actualizado correctamente.',
+                'tipo' => 'exito'
+            ]);
+        } catch (\Illuminate\Database\QueryException $ex) {
+            // Capturar el mensaje de error de la base de datos
+            return redirect()->route('departamentos.editar.form', $id)->with([
+                'mensaje' => "Error al actualizar el departamento: <br>Hospital no encontrado<br>",
+                'tipo' => 'error'
+            ]);
+        }
+    }
+
+
+
     public function insertar(Request $request)
     {
         $request->validate([

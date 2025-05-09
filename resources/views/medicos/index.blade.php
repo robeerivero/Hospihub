@@ -5,6 +5,11 @@
     <title>HospiHub - Lista de Médicos</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
     <link rel="stylesheet" href="{{ asset('css/citas.css') }}">
+    <style>
+        .table {
+            width: 90%;
+        }
+    </style>
 </head>
 <body>
     <header><nav><div id="logo">HospiHub</div></nav></header>
@@ -22,7 +27,7 @@
                 <th>Ciudad</th>
                 <th>Calle</th>
                 <th>Email</th>
-                <th>PIN</th>
+                <!--<th>PIN</th>-->
                 <th>Departamento</th>
                 <th>Id Departamento</th>
                 <th>Hospital</th>
@@ -40,11 +45,11 @@
                     <td>{{ $med->Ciudad }}</td>
                     <td>{{ $med->Calle }}</td>
                     <td>{{ $med->Email }}</td>
-                    <td>{{ $med->PIN }}</td>
+                    <!--<td>{{ $med->PIN }}</td>-->
                     <td>{{ $med->Nombre_departamento }}</td>
                     <td>{{ $med->Id_departamento }}</td>
                     <td>{{ $med->Nombre_hospital }}</td>
-                    <td><a href="{{ url('/editar/editar-medico/' . $med->Id_medico) }}" class="btn-accion">Editar</a></td>
+                    <td><a href="{{ url('/editar/medico/' . $med->Id_medico) }}" class="btn-accion">Editar</a></td>
                 </tr>
             @endforeach
         </tbody>

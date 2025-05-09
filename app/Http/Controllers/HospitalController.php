@@ -23,6 +23,44 @@ class HospitalController extends Controller
         return view('insertar.hospital');
     }
 
+    public function formEditar($id)
+    {
+        $hospital = DB::select("CALL Obtener_Hospitales_Cursor(?)", [$id]);
+
+        if (!$hospital) {
+            return redirect()->route('hospitales.index')->with('error', 'Hospital no encontrado');
+        }
+
+        return view('editar.hospital', ['hospital' => $hospital[0]]);
+    }
+
+    public function editar(Request $request, $id)
+    {
+        $request->validate([
+            'nombre' => 'required|string|max:255',
+            'ciudad' => 'required|string|max:255',
+            'calle' => 'required|string|max:255'
+        ]);
+
+        $nombre = $request->input('nombre');
+        $ciudad = $request->input('ciudad');
+        $calle = $request->input('calle');
+
+        try {
+            DB::statement("CALL Editar_Hospital(?, ?, ?, ?)", [$id, $nombre, $ciudad, $calle]);
+
+            return redirect()->route('hospitales.index')->with([
+                'mensaje' => 'Hospital actualizado correctamente.',
+                'tipo' => 'exito'
+            ]);
+        } catch (\Illuminate\Database\QueryException $ex) {
+            return redirect()->route('hospitales.index')->with([
+                'mensaje' => 'Error al actualizar el hospital: ' . $ex->getMessage(),
+                'tipo' => 'error'
+            ]);
+        }
+    }
+
     public function insertar(Request $request)
     {
         $nombre = $request->input('nombre');

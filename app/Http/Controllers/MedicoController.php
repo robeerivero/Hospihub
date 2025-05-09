@@ -23,6 +23,86 @@ class MedicoController extends Controller
         return view('insertar.medico');
     }
 
+    public function formEditar($id)
+    {
+        $medico = DB::select("CALL Obtener_Medicos_Cursor(?)", [$id]);
+
+        if (!$medico) {
+            return redirect()->route('medicos.index')->with('error', 'Médico no encontrado');
+        }
+
+        return view('editar.medico', ['medico' => $medico[0]]);
+    }
+
+    public function editar(Request $request, $id)
+    {
+        // Validar los datos del formulario
+        $request->validate([
+            'nombre' => 'required|string|max:255',
+            'apellidos' => 'required|string|max:255',
+            'telefono' => 'required|string|max:255',
+            'fecha_nacimiento' => 'required|date',
+            'ciudad' => 'required|string|max:255',
+            'calle' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'pin' => 'required|string|min:4|max:4',
+            'departamento' => 'required|string|max:255',
+            'hospital' => 'required|string|max:255',
+        ]);
+    
+        // Recuperar los datos del formulario
+        $nombre = $request->input('nombre');
+        $apellidos = $request->input('apellidos');
+        $telefono = $request->input('telefono');
+        $fecha_nacimiento = $request->input('fecha_nacimiento');
+        $ciudad = $request->input('ciudad');
+        $calle = $request->input('calle');
+        $email = $request->input('email');
+        $pin = bcrypt($request->input('pin')); // Hasheo del PIN
+        $departamento = $request->input('departamento');
+        $hospital = $request->input('hospital');
+    
+        try {
+            // Llamada al procedimiento almacenado para actualizar el médico
+            DB::statement("CALL Editar_Medico(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+                $id,
+                $nombre,
+                $apellidos,
+                $telefono,
+                $fecha_nacimiento,
+                $ciudad,
+                $calle,
+                $email,
+                $pin,
+                $departamento,
+                $hospital,
+            ]);
+    
+            // Redirigir con un mensaje de éxito
+            return redirect()->route('medicos.index')->with([
+                'mensaje' => 'Médico actualizado correctamente.',
+                'tipo' => 'exito'
+            ]);
+        } catch (\Illuminate\Database\QueryException $ex) {
+            // Capturamos el error de la base de datos
+            $mensaje = "Error al actualizar el médico: " . $ex->getMessage();
+            return redirect()->route('medicos.editar.form', $id)->with([
+                'mensaje' => $mensaje,
+                'tipo' => 'error'
+            ]);
+        } catch (\Exception $e) {
+            // Captura cualquier otro tipo de error
+            $mensaje = "Error inesperado: " . $e->getMessage();
+            return redirect()->route('medicos.editar.form', $id)->with([
+                'mensaje' => $mensaje,
+                'tipo' => 'error'
+            ]);
+        }
+    }
+    
+
+
+
     public function insertar(Request $request)
     {
         $request->validate([

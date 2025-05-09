@@ -43,7 +43,7 @@
                     <td>{{ $pac->Calle }}</td>
                     <td>{{ $pac->Email }}</td>
                     <!--<td>{{ $pac->PIN }}</td>-->
-                    <td><a href="{{ url('/editar/editar-paciente/' . $pac->Id_paciente) }}" class="btn-accion">Editar</a></td>
+                    <td><a href="{{ url('/editar/paciente/' . $pac->Id_paciente) }}" class="btn-accion">Editar</a></td>
                 </tr>
             @endforeach
         </tbody>

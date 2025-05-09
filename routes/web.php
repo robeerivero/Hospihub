@@ -49,11 +49,11 @@ Route::middleware('auth:web')->group(function () {
     Route::view('/menu_admin', 'menu_admin')->name('menu_admin');
 
     // Rutas de eliminación de entidades
-    Route::get('/eliminar/hospital', [HospitalController::class, 'form'])->name('hospitales.eliminar.form');
+    Route::get('/eliminar/hospital', [HospitalController::class, 'formEliminar'])->name('hospitales.eliminar.form');
     Route::post('/eliminar/hospital', [HospitalController::class, 'eliminar'])->name('hospitales.eliminar');
-    Route::get('/eliminar/medico', [MedicoController::class, 'form'])->name('medicos.eliminar.form');
+    Route::get('/eliminar/medico', [MedicoController::class, 'formEliminar'])->name('medicos.eliminar.form');
     Route::post('/eliminar/medico', [MedicoController::class, 'eliminar'])->name('medicos.eliminar');
-    Route::get('/eliminar/paciente', [PacienteController::class, 'form'])->name('pacientes.eliminar.form');
+    Route::get('/eliminar/paciente', [PacienteController::class, 'formEliminar'])->name('pacientes.eliminar.form');
     Route::post('/eliminar/paciente', [PacienteController::class, 'eliminar'])->name('pacientes.eliminar');
     Route::get('/eliminar/departamento', [DepartamentoController::class, 'formEliminar'])->name('departamentos.eliminar.form');
     Route::post('/eliminar/departamento', [DepartamentoController::class, 'eliminar'])->name('departamentos.eliminar');
@@ -67,6 +67,16 @@ Route::middleware('auth:web')->group(function () {
     Route::post('/insertar/paciente', [PacienteController::class, 'insertar'])->name('pacientes.insertar');
     Route::get('/insertar/departamento', [DepartamentoController::class, 'formInsertar'])->name('departamentos.insertar.form');
     Route::post('/insertar/departamento', [DepartamentoController::class, 'insertar'])->name('departamentos.insertar');
+
+    // Rutas de edición
+    Route::get('/editar/hospital/{id}', [HospitalController::class, 'formEditar'])->name('hospitales.editar.form');
+    Route::post('/editar/hospital/{id}', [HospitalController::class, 'editar'])->name('hospitales.editar');
+    Route::get('/editar/medico/{id}', [MedicoController::class, 'formEditar'])->name('medicos.editar.form');
+    Route::post('/editar/medico/{id}', [MedicoController::class, 'editar'])->name('medicos.editar');
+    Route::get('/editar/paciente/{id}', [PacienteController::class, 'formEditar'])->name('pacientes.editar.form');
+    Route::post('/editar/paciente/{id}', [PacienteController::class, 'editar'])->name('pacientes.editar');
+    Route::get('/editar/departamento/{id}', [DepartamentoController::class, 'formEditar'])->name('departamentos.editar.form');
+    Route::post('/editar/departamento/{id}', [DepartamentoController::class, 'editar'])->name('departamentos.editar');
 });
 
 // Rutas de visualización públicas
