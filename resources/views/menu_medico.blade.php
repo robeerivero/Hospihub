@@ -30,10 +30,13 @@
         <p class="mb-4">Selecciona una opción para gestionar tu trabajo: </p>
 
         <div class="d-grid gap-3">
-            <!-- <a href="{{ route('/medico/citas') }}" class="btn btn-primary">📅 Gestionar Citas</a>
-            <a href="{{ route('/medico/pacientes') }}" class="btn btn-success">👥 Gestionar Pacientes</a>
-            <a href="{{ route('/medico/consultas') }}" class="btn btn-info">🩺 Consultas Médicas</a> -->
-            <a href="{{ route('logout') }}" class="btn btn-danger">❌ Cerrar Sesión</a>
+            <a href="{{ route('medico.citas') }}" class="btn btn-primary">📅 Ver todas mis citas</a>
+            <a href="{{ route('medico.citas.pendientes') }}" class="btn btn-success">⏳ Ver citas pendientes</a>
+            
+            <form action="{{ route('logout') }}" method='POST' style="display: inline;">
+                @csrf
+                <button type="submit" class="btn btn-danger">❌ Cerrar Sesión</button>
+            </form>
         </div>
     </div>
 

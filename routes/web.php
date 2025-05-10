@@ -29,6 +29,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 // Rutas para pacientes autenticados
 Route::middleware('auth:web')->group(function () {
     Route::view('/menu_paciente', 'menu_paciente')->name('menu_paciente');
+
     Route::get('/paciente/citas', [PacienteCitaController::class, 'index'])->name('paciente.citas.index');
     Route::get('/paciente/citas/{id}', [PacienteCitaController::class, 'show'])->name('paciente.citas.show');
     Route::get('/paciente/elegir', [PacienteCitaController::class, 'formElegir'])->name('paciente.citas.elegir');
@@ -39,9 +40,13 @@ Route::middleware('auth:web')->group(function () {
 });
 
 // Rutas para médicos autenticados
-Route::middleware('auth:web')->group(function () {
+Route::middleware('auth:medico')->group(function () {
     Route::view('/menu_medico', 'menu_medico')->name('menu_medico');
 
+    Route::get('/medico/citas/', [MedicoController::class, 'verCitas'])->name('medico.citas');
+    Route::get('/medico/citas/pendientes', [MedicoController::class, 'verCitasPendientes'])->name('medico.citas.pendientes');
+    Route::get('/medico/citas/diagnostico/{id}', [MedicoController::class, 'formAñadirDiagnostico'])->name('medico.citas.diagnostico.form');
+    Route::post('/medico/citas/diagnostico/{id}', [MedicoController::class, 'procesarDiagnostico'])->name('medico.citas.diagnostico');
 });
 
 // Ruta exclusiva para administradores

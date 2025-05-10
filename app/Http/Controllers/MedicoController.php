@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
@@ -99,9 +100,6 @@ class MedicoController extends Controller
             ]);
         }
     }
-    
-
-
 
     public function insertar(Request $request)
     {
@@ -147,7 +145,6 @@ class MedicoController extends Controller
         return redirect()->back()->with(['mensaje' => $mensaje, 'tipo' => $tipo]);
     }
 
-
     public function eliminar(Request $request)
     {
         $email = $request->input('email_medico');
@@ -170,5 +167,82 @@ class MedicoController extends Controller
         }
 
         return back()->with(['mensaje' => $mensaje, 'tipo' => $tipo]);
+    }
+
+    public function verCitas()
+    {
+        $citas = DB::select("CALL ObtenerCitasMedico(?)", [Auth::guard('medico')->user()->Id_medico]);
+        return view('medicos.citas', compact('citas'));
+    }
+
+    public function verCitasPendientes()
+    {
+        $citasPendientes = DB::select("CALL ObtenerCitasPacienteAsignado(?)", [Auth::guard('medico')->user()->Id_medico]);
+        return view('medicos.citas_pendientes', compact('citasPendientes'));
+    }
+
+    public function formAñadirDiagnostico($id)
+    {
+        $cita = DB::select("CALL Obtener_Cita(?)", [$id]);
+
+        if (!$cita) {
+            return redirect()->route('medico.citas.todas')->with('error', 'Cita no encontrada.');
+        }
+
+        return view('medicos.añadir_diagnostico', compact('cita'));
+    }
+
+    public function procesarDiagnostico(Request $request, $id)
+    {
+        $request->validate([
+            'descripcion' => 'required|string|max:1000',
+            'recomendacion' => 'nullable|string|max:1000',
+            'nombre_medicamento.*' => 'nullable|string|max:255',
+            'frecuencia.*' => 'nullable|string|max:255'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Verificar si ya existe un diagnóstico para esta cita
+            $diagnosticoExistente = DB::select("CALL ObtenerDiagnosticoPorCita(?)", [$id]);
+        
+            if($diagnosticoExistente) {
+                //Eliminar el diagnóstico anterior
+                DB::statement("DELETE FROM diagnostico WHERE Id_diagnostico = ?", [$diagnosticoExistente[0]->id_diagnostico]);
+
+                //Actualizar el diagnóstico existente
+                DB::statement("UPDATE cita SET Id_diagnostico = NULL WHERE Id_cita = ?", [$id]);
+            }
+
+            //Insertar nuevo diagnóstico
+            DB::statement("CALL Insertar_Diagnostico(?, ?, ?)", [
+                $id,
+                $request->input('descripcion'),
+                $request->input('recomendacion')
+            ]);
+            $idDiagnostico = DB::select("SELECT LAST_INSERT_ID() AS id_diagnostico")[0]->id_diagnostico;
+            DB::statement("UPDATE cita SET Id_diagnostico = ? WHERE Id_cita = ?", [$idDiagnostico, $id]);
+
+            //Eliminar medicamentos previos si hay modificación
+            DB::table('Medicamento')->where('Id_diagnostico', $diagnosticoExistente[0]->Id_diagnostico ?? 0)->delete();
+
+            // Procesar medicamentos
+            if ($request->filled('nombre_medicamento')) {
+                foreach ($request->input('nombre_medicamento') as $index => $nombre) {
+                    DB::table('Medicamento')->insert([
+                        'Id_diagnostico' => $idDiagnostico,
+                        'Nombre' => $nombre,
+                        'Frecuencia' => $request->input('frecuencia')[$index]
+                    ]);
+                }
+            }
+
+            DB::commit();
+            return redirect()->route('medico.citas')->with(['mensaje' => '✅ Diagnóstico y medicamentos registrados correctamente.', 'tipo' => 'mensaje-exito']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('medico.citas.diagnostico.form', $id)->with(['mensaje' => '❌ Error: ' . $e->getMessage(), 'tipo' => 'mensaje-error']);
+        }
     }
 }

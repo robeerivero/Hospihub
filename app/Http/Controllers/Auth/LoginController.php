@@ -27,18 +27,18 @@ class LoginController extends Controller
         $paciente = Paciente::where('Email', $request->Email)->first();
         $medico = Medico::where('Email', $request->Email)->first();
 
-        if($paciente && strtolower($paciente->Nombre) === 'admin') {
+        if($paciente && $paciente->Email === 'admin@mail.com' && Hash::check($request->PIN, $paciente->PIN)) {
             Auth::login($paciente);
             return redirect(route('menu_admin'))->with('success', 'Has iniciado sesión correctamente como admin!!');
         }
         
         if($paciente && Hash::check($request->PIN, $paciente->PIN)) {
             Auth::login($paciente);
-            return redirect('/menu_paciente')->with('success', 'Has iniciado sesión correctamente!!');
-        }elseif ($medico && Hash::check($request->PIN, $medico->PIN)) {
+            return redirect('menu_paciente')->with('success', 'Has iniciado sesión correctamente!!');
+        }
+        
+        if ($medico && Hash::check($request->PIN, $medico->PIN)) {
             Auth::guard('medico')->login($medico);
-            session()->put('auth_guard', 'medico'); // 🔥 Guardar el guard activo en la sesión
-            session()->regenerate();
             return redirect(route('menu_medico'))->with('success', 'Has iniciado sesión correctamente!!');
         }
 

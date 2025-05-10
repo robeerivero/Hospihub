@@ -90,7 +90,6 @@ class PacienteController extends Controller
         }
     }
 
-
     public function insertar(Request $request)
     {
         // Recuperar los datos del formulario
