@@ -70,7 +70,7 @@
         </ul>
     </div>
 
-    <a href="{{ url('/menu-admin') }}">← Volver al menú</a>
+    <a href="javascript:window.history.back()" class="btn-back">← Volver al menú</a>
 
 </body>
 </html>

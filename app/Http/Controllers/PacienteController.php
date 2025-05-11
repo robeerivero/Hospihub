@@ -169,7 +169,6 @@ class PacienteController extends Controller
         }
     }
 
-
     public function eliminar(Request $request)
     {
         $email = $request->input('email_paciente');

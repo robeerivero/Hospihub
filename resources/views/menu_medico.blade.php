@@ -40,6 +40,8 @@
         </div>
     </div>
 
+    @include('components.covid_button')
+
     <!-- Script para mostrar el Toast automáticamente -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {

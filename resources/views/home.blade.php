@@ -34,6 +34,8 @@
         <a href="{{ route('registro') }}" class="btn btn-primary">Registrarse como Paciente</a>
     </div>
 
+    @include('components.covid_button')
+
     <!-- Script para mostrar el Toast automáticamente -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {

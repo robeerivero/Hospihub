@@ -33,5 +33,7 @@
             ¿No tienes cuenta? <a href="{{ route('registro') }}">Regístrate aquí</a>
         </p>
     </div>
+
+    @include('components.covid_button')
 </body>
 </html>
