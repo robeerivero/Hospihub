@@ -12,41 +12,61 @@
 <body class="d-flex align-items-center justify-content-center vh-100 bg-light">
     <div class="p-4 bg-white shadow rounded w-25">
         <h2 class="text-center mb-4">Registro de Pacientes</h2>
+
+        <!-- Mostrar errores globales (por ejemplo, cuando el email ya está registrado) -->
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('registro') }}">
             @csrf
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="Nombre" class="form-label">Nombre</label>
-                    <input type="text" class="form-control" name="Nombre" required>
+                    <input type="text" class="form-control" name="Nombre" value="{{ old('Nombre') }}" required>
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="Apellidos" class="form-label">Apellidos</label>
-                    <input type="text" class="form-control" name="Apellidos" required>
+                    <input type="text" class="form-control" name="Apellidos" value="{{ old('Apellidos') }}" required>
                 </div>
             </div>
             <div class="mb-3">
                 <label for="Telefono" class="form-label">Teléfono</label>
-                <input type="text" class="form-control" name="Telefono">
+                <input type="text" class="form-control" name="Telefono" value="{{ old('Telefono') }}">
             </div>
             <div class="mb-3">
                 <label for="Fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
-                <input type="date" class="form-control" name="Fecha_nacimiento">
+                <input type="date" class="form-control" name="Fecha_nacimiento" value="{{ old('Fecha_nacimiento') }}">
             </div>
             <div class="mb-3">
-                <label for="Id_direccion" class="form-label">Dirección</label>
-                <input type="text" class="form-control" name="Id_direccion">
+                <label for="Ciudad" class="form-label">Ciudad</label>
+                <input type="text" class="form-control" name="Ciudad" value="{{ old('Ciudad') }}">
+            </div>
+            <div class="mb-3">
+                <label for="Calle" class="form-label">Calle</label>
+                <input type="text" class="form-control" name="Calle" value="{{ old('Calle') }}">
             </div>
             <div class="mb-3">
                 <label for="Email" class="form-label">Correo Electrónico</label>
-                <input type="email" class="form-control" name="Email" required>
+                <input type="email" class="form-control" name="Email" value="{{ old('Email') }}" required>
+                @error('Email') 
+                    <div class="text-danger">{{ $message }}</div>
+                @enderror
             </div>
             <div class="mb-3">
                 <label for="PIN" class="form-label">Contraseña</label>
                 <input type="password" class="form-control" name="PIN" required>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100">Entrar</button>
+            <button type="submit" class="btn btn-primary w-100">Registrarse</button>
         </form>
+
         <p class="mt-3 text-center">
             ¿Ya tienes cuenta? <a href="{{ route('login') }}">Inicia sesión aquí</a>
         </p>

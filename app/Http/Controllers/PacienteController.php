@@ -131,28 +131,44 @@ class PacienteController extends Controller
 
     public function registrar(Request $request)
     {
+        // Validación de los datos del formulario
         $request->validate([
             'Nombre' => 'required|string|max:255',
             'Apellidos' => 'required|string|max:255',
-            'Telefono' => 'required|string|max:255',
+            'Telefono' => 'nullable|string|max:20',
             'Fecha_nacimiento' => 'required|date',
-            'Id_direccion' => 'required|integer',
-            'Email' => 'required|string|email|max:255|unique:paciente,Email',
-            'PIN' => 'required|string|min:4|max:4'
+            'Email' => 'required|string|email|max:255|unique:paciente,Email', // Aquí validamos que el email no exista
+            'PIN' => 'required|string|min:4|max:8',
         ]);
 
-        Paciente::create([
-            'Nombre' => $request->Nombre,
-            'Apellidos' => $request->Apellidos,
-            'Telefono' => $request->Telefono,
-            'Fecha_nacimiento' => $request->Fecha_nacimiento,
-            'Id_direccion' => $request->Id_direccion,
-            'Email' => $request->Email,
-            'PIN' => Hash::make($request->PIN)
-        ]);
+        // Verificar si el correo electrónico ya está registrado
+        $existingPaciente = Paciente::where('Email', $request->Email)->first();
 
-        return redirect('/login')->with('success', 'Paciente registrado correctamente. Inicie sesión.');
+        if ($existingPaciente) {
+            return redirect()->back()->withInput()->withErrors([
+                'Email' => 'Este correo electrónico ya está registrado.',
+            ]);
+        }
+
+        // Si el email no está registrado, proceder a insertar el paciente
+        try {
+            DB::statement("CALL Insertar_Paciente(?, ?, ?, ?, ?, ?, ?, ?)", [
+                $request->Nombre,
+                $request->Apellidos,
+                $request->Telefono,
+                $request->Fecha_nacimiento,
+                $request->Ciudad,
+                $request->Calle,
+                $request->Email,
+                bcrypt($request->PIN), // Encriptar la contraseña
+            ]);
+
+            return redirect('/login')->with('success', 'Paciente registrado correctamente. Inicie sesión.');
+        } catch (\Exception $ex) {
+            return redirect()->back()->with('error', 'Hubo un error al registrar el paciente: ' . $ex->getMessage());
+        }
     }
+
 
     public function eliminar(Request $request)
     {
