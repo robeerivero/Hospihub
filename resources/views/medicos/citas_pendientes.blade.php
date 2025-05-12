@@ -25,13 +25,14 @@
             <tbody>
                 @foreach($citasPendientes as $cita)
                     <tr>
-                        <td>{{ $cita->fecha }}</td>
-                        <td>{{ $cita->hora }}</td>
-                        <td>{{ $cita->paciente_nombre }}</td>
+                        <td>{{ $cita->Fecha }}</td>
+                        <td>{{ $cita->Hora_Cita }}</td>
+                        <td>{{ $cita->Nombre_Paciente }} {{ $cita->Apellidos_Paciente }}</td>
                         <td>
-                            <a href="{{ route('medico.citas.diagnostico.form', $cita->id) }}">📝 Añadir diagnóstico</a>
+                            <a href="{{ route('medico.citas.diagnostico.form', $cita->Id_Cita) }}">📝 Añadir diagnóstico</a>
                         </td>
                     </tr>
+
                 @endforeach
             </tbody>
         </table>
