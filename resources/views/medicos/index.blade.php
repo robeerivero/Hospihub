@@ -12,8 +12,14 @@
     </style>
 </head>
 <body>
-    <header><nav><div id="logo">HospiHub</div></nav></header>
-    <br><br><br><br>
+    <header>
+        <nav>
+        <div id="logo">
+            <a href="{{ route('menu_admin') }}" style="color: white; text-decoration: none;">HospiHub</a>
+        </div>
+    </nav>
+    </header>
+    <br>
     <h1>Lista de Médicos del Sistema</h1>
 
     <table class='table table-striped'>

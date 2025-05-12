@@ -54,10 +54,12 @@
 <body>
 
 <header>
-    <nav>
-        <div id="logo"></div>
+        <nav>
+        <div id="logo">
+            <a href="{{ route('menu_admin') }}" style="color: white; text-decoration: none;">HospiHub</a>
+        </div>
     </nav>
-</header>
+    </header>
 
 <div id="contenedor">
     <h1>Eliminar Médico</h1>

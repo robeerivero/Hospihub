@@ -47,10 +47,12 @@
 </head>
 <body>
 <header>
-    <nav>
-        <div id="logo">HospiHub</div>
+        <nav>
+        <div id="logo">
+            <a href="{{ route('menu_admin') }}" style="color: white; text-decoration: none;">HospiHub</a>
+        </div>
     </nav>
-</header>
+    </header>
 
 <div id="contenedor">
     <h1>Registrar Departamento <span class="material-symbols-outlined">business</span></h1>
