@@ -46,7 +46,7 @@ class MedicoController extends Controller
             'ciudad' => 'required|string|max:255',
             'calle' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'pin' => 'required|string|min:4|max:4',
+            'pin' => 'nullable|string|min:4|max:50',
             'departamento' => 'required|string|max:255',
             'hospital' => 'required|string|max:255',
         ]);
@@ -59,7 +59,7 @@ class MedicoController extends Controller
         $ciudad = $request->input('ciudad');
         $calle = $request->input('calle');
         $email = $request->input('email');
-        $pin = bcrypt($request->input('pin')); // Hasheo del PIN
+        $pin = $request->filled('PIN') ? bcrypt($request->PIN) : null;
         $departamento = $request->input('departamento');
         $hospital = $request->input('hospital');
     
@@ -74,7 +74,7 @@ class MedicoController extends Controller
                 $ciudad,
                 $calle,
                 $email,
-                $pin,
+                $pin ?? DB::table('paciente')->where('Id_paciente', $id)->value('PIN'),
                 $departamento,
                 $hospital,
             ]);

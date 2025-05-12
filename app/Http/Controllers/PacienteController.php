@@ -51,10 +51,10 @@ class PacienteController extends Controller
             'Ciudad' => 'required|string|max:255',
             'Calle' => 'required|string|max:255',
             'Email' => 'required|string|email|max:255',
-            'PIN' => 'required|string|min:4|max:4'
+            'PIN' => 'nullable|string|min:4|max:50'
         ]);
 
-        // Obtener los datos del formulario
+        // Recoger datos del formulario
         $nombre = $request->input('Nombre');
         $apellidos = $request->input('Apellidos');
         $telefono = $request->input('Telefono');
@@ -62,21 +62,20 @@ class PacienteController extends Controller
         $ciudad = $request->input('Ciudad');
         $calle = $request->input('Calle');
         $email = $request->input('Email');
-        $pin = bcrypt($request->input('PIN')); // Hashear el PIN
+        $pin = $request->filled('PIN') ? bcrypt($request->PIN) : null;
 
         try {
-            // Intentar con Eloquent para actualizar los datos
-            $paciente = Paciente::findOrFail($id);
-            $paciente->Nombre = $nombre;
-            $paciente->Apellidos = $apellidos;
-            $paciente->Telefono = $telefono;
-            $paciente->Fecha_nacimiento = $fechaNacimiento;
-            $paciente->Ciudad = $ciudad;
-            $paciente->Calle = $calle;
-            $paciente->Email = $email;
-            $paciente->PIN = $pin;
-
-            $paciente->save(); // Guardar los cambios
+            DB::statement("CALL Editar_Paciente(?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+                $id,
+                $nombre,
+                $apellidos,
+                $telefono,
+                $fechaNacimiento,
+                $ciudad,
+                $calle,
+                $email,
+                $pin ?? DB::table('paciente')->where('Id_paciente', $id)->value('PIN')  // si no hay nuevo, reutiliza el actual
+            ]);
 
             return redirect()->route('pacientes.index')->with([
                 'mensaje' => 'Paciente actualizado correctamente.',
@@ -89,6 +88,7 @@ class PacienteController extends Controller
             ]);
         }
     }
+
 
     public function insertar(Request $request)
     {

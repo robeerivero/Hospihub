@@ -45,7 +45,7 @@
             <input type="email" id="email" name="email" value="{{ $medico->Email }}" required><br><br>
 
             <label for="pin">Pin</label><br>
-            <input type="password" id="pin" name="pin" value="{{ $medico->PIN }}" required><br><br>
+            <input type="password" id="PIN" name="PIN" placeholder="Introduce nuevo PIN (opcional)"><br><br>
 
             <label for="departamento">Departamento</label><br>
             <input type="text" id="departamento" name="departamento" value="{{ $medico->Nombre_departamento }}" required><br><br>

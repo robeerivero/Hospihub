@@ -13,7 +13,6 @@
     <div id="contenedor">
         <h1>Editar Datos del Paciente</h1>
 
-        <!-- Mostrar mensaje de error o éxito si está presente -->
         @if(session('mensaje'))
             <p style="color: {{ session('tipo') == 'exito' ? 'green' : 'red' }}; text-align: center;">
                 {{ session('mensaje') }}
@@ -45,7 +44,7 @@
             <input type="email" id="Email" name="Email" value="{{ $paciente->Email }}" required><br><br>
 
             <label for="PIN">PIN</label><br>
-            <input type="password" id="PIN" name="PIN" value="{{ $paciente->PIN }}" required><br><br>
+            <input type="password" id="PIN" name="PIN" placeholder="Introduce nuevo PIN (opcional)">
 
             <button type="submit">Guardar Cambios</button>
         </form>
