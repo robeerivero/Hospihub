@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
+use App\Notifications\CitaReservadaNotification;
+use App\Notifications\CitaCanceladaNotification;
 
 class PacienteCitaController extends Controller implements HasMiddleware
 {
@@ -25,6 +27,28 @@ class PacienteCitaController extends Controller implements HasMiddleware
                 return $next($request);
             }),
         ];
+    }
+
+    public function seleccionar(Request $request)
+    {
+        $request->validate([
+            'cita_id' => 'required|integer',
+        ]);
+
+        $paciente = auth()->user();
+
+        DB::table('Cita')->where('Id_Cita', $request->cita_id)
+            ->update([
+                'Id_paciente' => $paciente->Id_paciente,
+                'Estado' => 'Paciente Asignado',
+            ]);
+
+        // Obtener la cita para enviar datos al correo
+        $cita = DB::selectOne("SELECT Fecha, Hora FROM Cita WHERE Id_Cita = ?", [$request->cita_id]);
+
+        $paciente->notify(new CitaReservadaNotification($cita->Fecha, $cita->Hora));
+
+        return redirect()->route('paciente.citas.index')->with('success', 'Cita seleccionada y correo enviado.');
     }
 
     public function descargarPDF($id)
@@ -108,23 +132,6 @@ class PacienteCitaController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function seleccionar(Request $request)
-    {
-        $request->validate([
-            'cita_id' => 'required|integer',
-        ]);
-
-        $paciente_id = auth()->user()->Id_paciente;
-
-        DB::table('Cita')->where('Id_Cita', $request->cita_id)
-            ->update([
-                'Id_paciente' => $paciente_id,
-                'Estado' => 'Paciente Asignado',
-            ]);
-
-        return redirect()->route('paciente.citas.index')->with('success', 'Cita seleccionada correctamente.');
-    }
-
 
     public function cancelar(Request $request)
     {
@@ -132,12 +139,17 @@ class PacienteCitaController extends Controller implements HasMiddleware
             'cita_id' => 'required|integer',
         ]);
 
+        $cita = DB::selectOne("SELECT Fecha, Hora FROM Cita WHERE Id_cita = ?", [$request->cita_id]);
+
         DB::table('Cita')->where('Id_cita', $request->cita_id)
             ->update([
                 'Id_paciente' => null,
                 'Estado' => 'Disponible',
             ]);
 
-        return redirect()->route('paciente.citas.index')->with('success', 'Cita cancelada.');
+        $paciente = auth()->user();
+        $paciente->notify(new CitaCanceladaNotification($cita->Fecha, $cita->Hora));
+
+        return redirect()->route('paciente.citas.index')->with('success', 'Cita cancelada y correo enviado.');
     }
 }

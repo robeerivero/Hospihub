@@ -1,23 +1,35 @@
 <?php
-
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-//Indicar a Laravel que la tabla paciente es una tabla de usuarios
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable; // ⬅ Añadir esto
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Paciente extends Authenticatable
 {
-    use HasFactory;
+    use HasFactory, Notifiable; // ⬅ Añadir Notifiable
 
     protected $table = 'paciente';
+    protected $primaryKey = 'Id_paciente';
+    public $timestamps = false;
+
     protected $fillable = [
         'Nombre', 'Apellidos', 'Telefono', 'Fecha_nacimiento', 'Id_direccion', 'Email', 'PIN'
     ];
-    protected $primaryKey = 'Id_paciente';
+
     protected $hidden = ['PIN'];
-    public $timestamps = false; // Desactivar los timestamps automáticos de Laravel
+
+    // Para notificaciones por correo
+    public function routeNotificationForMail()
+    {
+        return $this->Email; // ← Usa el campo real del correo
+    }
+
+    // Para el saludo en el email
+    public function getNameAttribute()
+    {
+        return "{$this->Nombre} {$this->Apellidos}";
+    }
 
     public function getAuthPassword()
     {
