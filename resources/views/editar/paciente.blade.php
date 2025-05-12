@@ -53,7 +53,7 @@
             <button type="submit">Guardar Cambios</button>
         </form>
 
-        <a href="{{ route('pacientes.index') }}">Volver a la lista de pacientes</a>
+        <a href="{{ route('paciente.index') }}">Volver a la lista de pacientes</a>
     </div>
 </body>
 </html>

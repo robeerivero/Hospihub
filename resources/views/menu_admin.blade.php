@@ -78,7 +78,7 @@
             <div class="btn-group">
                 <a href="{{ route('hospitales.index') }}" class="btn btn-info">🏥 Hospitales</a>
                 <a href="{{ route('medicos.index') }}" class="btn btn-info">👨‍⚕️ Médicos</a>
-                <a href="{{ route('pacientes.index') }}" class="btn btn-info">🧑‍⚕️ Pacientes</a>
+                <a href="{{ route('paciente.index') }}" class="btn btn-info">🧑‍⚕️ Pacientes</a>
                 <a href="{{ route('departamentos.index') }}" class="btn btn-info">📍 Departamentos</a>
             </div>
         </div>

@@ -13,7 +13,7 @@ class PacienteController extends Controller
     public function index()
     {
         $pacientes = DB::select("CALL Obtener_Pacientes_Cursor(NULL)");
-        return view('pacientes.index', ['pacientes' => $pacientes]);
+        return view('paciente.index', ['pacientes' => $pacientes]);
     }
 
     public function formEliminar()
@@ -33,7 +33,7 @@ class PacienteController extends Controller
 
         // Si el paciente no existe, redirigir con mensaje de error
         if (!$paciente) {
-            return redirect()->route('pacientes.index')->with('error', 'Paciente no encontrado');
+            return redirect()->route('paciente.index')->with('error', 'Paciente no encontrado');
         }
 
         // Pasar los datos a la vista
@@ -77,7 +77,7 @@ class PacienteController extends Controller
                 $pin ?? DB::table('paciente')->where('Id_paciente', $id)->value('PIN')  // si no hay nuevo, reutiliza el actual
             ]);
 
-            return redirect()->route('pacientes.index')->with([
+            return redirect()->route('paciente.index')->with([
                 'mensaje' => 'Paciente actualizado correctamente.',
                 'tipo' => 'exito'
             ]);

@@ -115,7 +115,7 @@ Route::middleware('auth:web')->group(function () {
 // Rutas de visualización públicas
 Route::get('/hospitales', [HospitalController::class, 'index'])->name('hospitales.index');
 Route::get('/medicos', [MedicoController::class, 'index'])->name('medicos.index');
-Route::get('/pacientes', [PacienteController::class, 'index'])->name('pacientes.index');
+Route::get('/pacientes', [PacienteController::class, 'index'])->name('paciente.index');
 Route::get('/departamentos', [DepartamentoController::class, 'index'])->name('departamentos.index');
 
 // Ruta para mostrar datos de COVID
