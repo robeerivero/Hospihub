@@ -7,5 +7,5 @@
     Se han eliminado todas las citas.
 </div>
 
-<a href="{{ route('admin.citas.index') }}">Volver al listado</a>
+<a href="{{ route('menu_admin') }}">Volver al listado</a>
 @endsection

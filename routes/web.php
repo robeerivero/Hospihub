@@ -82,6 +82,32 @@ Route::middleware('auth:web')->group(function () {
     Route::post('/editar/paciente/{id}', [PacienteController::class, 'editar'])->name('pacientes.editar');
     Route::get('/editar/departamento/{id}', [DepartamentoController::class, 'formEditar'])->name('departamentos.editar.form');
     Route::post('/editar/departamento/{id}', [DepartamentoController::class, 'editar'])->name('departamentos.editar');
+
+    // Muestra la pantalla de progreso antes de ejecutar la creación
+    Route::get('/admin/citas/progreso', function () {
+        return view('admin.citas.progreso');
+    })->name('admin.citas.progreso');
+
+    // Ejecuta la creación de citas y redirige a la vista de éxito
+    Route::get('/admin/citas/crear', [CitaController::class, 'crearTodas'])->name('admin.citas.crear');
+
+    // Muestra el mensaje final cuando las citas se han creado
+    Route::get('/admin/citas/exito', function () {
+        return view('admin.citas.exito');
+    })->name('admin.citas.exito');
+
+    /// Muestra la pantalla de progreso antes de ejecutar la eliminación
+    Route::get('/admin/citas/progreso_eliminar', function () {
+        return view('admin.citas.progreso_eliminar');
+    })->name('admin.citas.progreso_eliminar');
+
+    // Ejecuta la eliminación de citas y redirige a la vista de éxito
+    Route::get('/admin/citas/eliminar', [CitaController::class, 'eliminarTodas'])->name('admin.citas.eliminar');
+
+    // Muestra el mensaje final cuando las citas se han eliminado
+    Route::get('/admin/citas/eliminar_exito', function () {
+        return view('admin.citas.eliminar_exito');
+    })->name('admin.citas.eliminar_exito');
 });
 
 // Rutas de visualización públicas

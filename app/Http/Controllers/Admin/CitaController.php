@@ -14,14 +14,14 @@ class CitaController extends Controller
 
     public function crearTodas()
     {
-        $resultados = DB::select('CALL Crear_Citas()');
-        return view('admin.citas.crear', ['mensajes' => $resultados]);
+        DB::select('CALL Crear_Citas()');
+        return redirect()->route('admin.citas.exito');
     }
 
     public function eliminarTodas()
     {
         DB::table('Cita')->delete();
-        return view('admin.citas.eliminar');
+        return view('admin.citas.eliminar_exito');
     }
 }
 ?>
