@@ -48,7 +48,9 @@ h3 {
 }
 
 .grid-container {
-    display: grid;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 25px;
     max-width: 1200px;
@@ -62,6 +64,7 @@ h3 {
     border-radius: 10px;
     box-shadow: 0 6px 15px var(--shadow-color);
     text-align: center;
+    width: 22%;
 }
 
 .btn-group {
@@ -141,6 +144,10 @@ h3 {
 @media (max-width: 768px) {
     .grid-container {
         padding: 1rem;
+    }
+
+    .box {
+        width: 80%;
     }
 
     h1 {
