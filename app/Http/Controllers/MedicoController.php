@@ -183,14 +183,34 @@ class MedicoController extends Controller
 
     public function formAñadirDiagnostico($id)
     {
-        $cita = DB::select("CALL Obtener_Cita(?)", [$id]);
+        // Obtener la información básica de la cita
+        $cita = DB::table('cita')
+            ->join('paciente', 'cita.Id_paciente', '=', 'paciente.Id_paciente')
+            ->leftJoin('diagnostico', 'cita.Id_diagnostico', '=', 'diagnostico.Id_diagnostico')
+            ->select(
+                'cita.Id_cita as id',
+                'cita.Fecha as fecha',
+                DB::raw('TIME_FORMAT(cita.Hora, "%H:%i:%s") as hora'),
+                'paciente.Nombre as paciente_nombre',
+                'diagnostico.Descripcion as diagnostico_descripcion',
+                'diagnostico.Recomendacion as diagnostico_recomendacion'
+            )
+            ->where('cita.Id_cita', $id)
+            ->first();
 
         if (!$cita) {
             return redirect()->route('medico.citas.todas')->with('error', 'Cita no encontrada.');
         }
 
-        return view('medicos.añadir_diagnostico', compact('cita'));
+        // Obtener medicamentos asociados si existen
+        $medicamentos = DB::select("CALL ObtenerMedicamentosPorCita(?)", [$id]);
+
+        // Convertir el objeto a array para facilitar el uso en la vista
+        $cita->medicamentos = $medicamentos;
+
+        return view('medicos.diagnostico', compact('cita'));
     }
+
 
     public function procesarDiagnostico(Request $request, $id)
     {
@@ -206,43 +226,62 @@ class MedicoController extends Controller
 
             // Verificar si ya existe un diagnóstico para esta cita
             $diagnosticoExistente = DB::select("CALL ObtenerDiagnosticoPorCita(?)", [$id]);
-        
-            if($diagnosticoExistente) {
-                //Eliminar el diagnóstico anterior
-                DB::statement("DELETE FROM diagnostico WHERE Id_diagnostico = ?", [$diagnosticoExistente[0]->id_diagnostico]);
 
-                //Actualizar el diagnóstico existente
-                DB::statement("UPDATE cita SET Id_diagnostico = NULL WHERE Id_cita = ?", [$id]);
+            // Si existe, eliminar medicamentos y diagnóstico asociado
+            if (!empty($diagnosticoExistente)) {
+                $idDiagnosticoExistente = $diagnosticoExistente[0]->Id_diagnostico ?? null;
+
+                if ($idDiagnosticoExistente) {
+                    DB::table('medicamento')->where('Id_diagnostico', $idDiagnosticoExistente)->delete();
+                    DB::statement("DELETE FROM diagnostico WHERE Id_diagnostico = ?", [$idDiagnosticoExistente]);
+                    DB::statement("UPDATE cita SET Id_diagnostico = NULL WHERE Id_cita = ?", [$id]);
+                }
             }
 
-            //Insertar nuevo diagnóstico
+            // Insertar nuevo diagnóstico
             DB::statement("CALL Insertar_Diagnostico(?, ?, ?)", [
                 $id,
                 $request->input('descripcion'),
                 $request->input('recomendacion')
             ]);
-            $idDiagnostico = DB::select("SELECT LAST_INSERT_ID() AS id_diagnostico")[0]->id_diagnostico;
+
+            // Obtener el ID del nuevo diagnóstico insertado
+            $nuevoDiagnostico = DB::select("SELECT LAST_INSERT_ID() AS id_diagnostico");
+            $idDiagnostico = $nuevoDiagnostico[0]->id_diagnostico;
+
+            // Asociar el diagnóstico a la cita
             DB::statement("UPDATE cita SET Id_diagnostico = ? WHERE Id_cita = ?", [$idDiagnostico, $id]);
-
-            //Eliminar medicamentos previos si hay modificación
-            DB::table('Medicamento')->where('Id_diagnostico', $diagnosticoExistente[0]->Id_diagnostico ?? 0)->delete();
-
-            // Procesar medicamentos
+            if (!$idDiagnostico) {
+                throw new \Exception('No se pudo obtener el ID del diagnóstico');
+            }
+                        // Insertar medicamentos si se proporcionan
             if ($request->filled('nombre_medicamento')) {
-                foreach ($request->input('nombre_medicamento') as $index => $nombre) {
-                    DB::table('Medicamento')->insert([
-                        'Id_diagnostico' => $idDiagnostico,
-                        'Nombre' => $nombre,
-                        'Frecuencia' => $request->input('frecuencia')[$index]
-                    ]);
+                $nombres = $request->input('nombre_medicamento');
+                $frecuencias = $request->input('frecuencia');
+
+                foreach ($nombres as $index => $nombre) {
+                    if (!empty($nombre) && !empty($frecuencias[$index])) {
+                        DB::table('medicamento')->insert([
+                            'Id_diagnostico' => $idDiagnostico,
+                            'Nombre' => $nombre,
+                            'Frecuencia' => $frecuencias[$index]
+                        ]);
+                    }
                 }
             }
 
             DB::commit();
-            return redirect()->route('medico.citas')->with(['mensaje' => '✅ Diagnóstico y medicamentos registrados correctamente.', 'tipo' => 'mensaje-exito']);
+            return redirect()->route('medico.citas')->with([
+                'mensaje' => '✅ Diagnóstico y medicamentos registrados correctamente.',
+                'tipo' => 'mensaje-exito'
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('medico.citas.diagnostico.form', $id)->with(['mensaje' => '❌ Error: ' . $e->getMessage(), 'tipo' => 'mensaje-error']);
+            return redirect()->route('medico.citas.diagnostico.form', $id)->with([
+                'mensaje' => '❌ Error: ' . $e->getMessage(),
+                'tipo' => 'mensaje-error'
+            ]);
         }
     }
+
 }

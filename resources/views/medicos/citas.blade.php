@@ -8,15 +8,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🏥 Todas mis citas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/app-medico.css') }}">
+
 </head>
 <body>
-
+<nav>
+    <div id="logo">HospiHub</div>
+</nav>
     <h1>📅 Todas mis citas</h1>
 
     <!-- Mensaje de éxito/error -->
     @if(session('mensaje'))
         <p class="{{ session('tipo') }}">{{ session('mensaje') }}</p>
     @endif
+    
 
     @if(count($citas) > 0)
         <table border="1">
