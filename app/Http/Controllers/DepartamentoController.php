@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Hospital;
+use App\Models\Departamento;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
@@ -15,8 +17,15 @@ class DepartamentoController extends Controller
 
     public function formEliminar()
     {
-        return view('eliminar.departamento');
+        
+        $departamentos = DB::table('departamento')
+                        ->join('hospital', 'departamento.Id_hospital', '=', 'hospital.Id_hospital')
+                        ->select('departamento.Id_departamento', 'departamento.Nombre', 'departamento.Ubicacion', 'hospital.Nombre as NombreHospital')
+                        ->get();
+
+        return view('eliminar.departamento', compact('departamentos'));
     }
+
 
     public function formInsertar()
     {
@@ -66,7 +75,43 @@ class DepartamentoController extends Controller
         }
     }
 
+/*
+DELIMITER $$
 
+CREATE PROCEDURE Insertar_Departamento(
+    IN nombre_hospital VARCHAR(50),
+    IN nombre VARCHAR(50),
+    IN ubicacion VARCHAR(50)
+)
+BEGIN
+    DECLARE v_id_hospital INT;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error al insertar el departamento';
+    END;
+
+    START TRANSACTION;
+
+    -- Obtener el ID del hospital
+    SELECT Id_hospital INTO v_id_hospital FROM Hospital WHERE Nombre = nombre_hospital;
+
+    -- Verificar si el hospital existe antes de insertar
+    IF v_id_hospital IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: El hospital especificado no existe';
+    ELSE
+        -- Insertar el departamento
+        INSERT INTO Departamento (Id_hospital, Nombre, Ubicacion) 
+        VALUES (v_id_hospital, nombre, ubicacion);
+
+        COMMIT;
+        SELECT 'Departamento insertado correctamente' AS Mensaje;
+    END IF;
+END$$
+
+DELIMITER ;
+*/
 
     public function insertar(Request $request)
     {
@@ -77,10 +122,21 @@ class DepartamentoController extends Controller
         ]);
 
         try {
-            DB::statement("CALL Insertar_Departamento(?, ?, ?)", [
-                $request->nombre_hospital,
-                $request->nombre_departamento,
-                $request->ubicacion
+            // Buscar el ID del hospital antes de la inserción
+            $hospital = DB::table('hospital')->where('Nombre', $request->nombre_hospital)->first();
+
+            if (!$hospital) {
+                return redirect()->route('departamentos.insertar.form')->with([
+                    'mensaje' => 'Error: El hospital especificado no existe.',
+                    'tipo' => 'error'
+                ]);
+            }
+
+            // Insertar el departamento directamente en Laravel
+            DB::table('departamento')->insert([
+                'Id_hospital' => $hospital->Id_hospital,
+                'Nombre' => $request->nombre_departamento,
+                'Ubicacion' => $request->ubicacion
             ]);
 
             return redirect()->route('departamentos.insertar.form')->with([
@@ -96,21 +152,28 @@ class DepartamentoController extends Controller
         }
     }
 
-
     public function eliminar(Request $request)
     {
         $request->validate([
             'id_departamento' => 'required|integer|min:1'
         ]);
 
-        $mensaje = '';
-        $tipo = '';
-
         try {
+            $departamentoExiste = DB::table('departamento')
+                                    ->where('Id_departamento', $request->id_departamento)
+                                    ->exists();
+
+            if (!$departamentoExiste) {
+                return redirect()->route('departamentos.eliminar.form')->with([
+                    'mensaje' => 'Error: El departamento especificado no existe.',
+                    'tipo' => 'error'
+                ]);
+            }
+            
             $resultado = DB::select("CALL Eliminar_Departamento(?)", [$request->id_departamento]);
 
-            if (!empty($resultado) && isset($resultado[0]->Mensaje)) {
-                $mensaje = $resultado[0]->Mensaje;
+            if (!empty($resultado) && isset($resultado[0]->resultado)) {
+                $mensaje = $resultado[0]->resultado;
                 $tipo = $mensaje === 'Departamento eliminado correctamente' ? 'exito' : 'error';
             } else {
                 $mensaje = 'No se recibió respuesta de la función.';

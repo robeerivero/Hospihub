@@ -70,7 +70,9 @@ Route::middleware('auth:web')->group(function () {
     Route::post('/insertar/medico', [MedicoController::class, 'insertar'])->name('medicos.insertar');
     Route::get('/insertar/paciente', [PacienteController::class, 'formInsertar'])->name('pacientes.insertar.form');
     Route::post('/insertar/paciente', [PacienteController::class, 'insertar'])->name('pacientes.insertar');
-    Route::get('/insertar/departamento', [DepartamentoController::class, 'formInsertar'])->name('departamentos.insertar.form');
+    Route::get('/departamentos/insertar', function () {
+        return view('insertar.departamento', ['hospitales' => DB::table('hospital')->get()]);
+    })->name('departamentos.insertar.form');
     Route::post('/insertar/departamento', [DepartamentoController::class, 'insertar'])->name('departamentos.insertar');
 
     // Rutas de edición

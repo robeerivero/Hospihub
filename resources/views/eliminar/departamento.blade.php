@@ -45,9 +45,17 @@
     <form method="POST" action="{{ route('departamentos.eliminar') }}">
         @csrf
         <div class="form-group">
-            <label for="id_departamento">ID del departamento a eliminar:</label>
-            <input type="number" name="id_departamento" id="id_departamento" required min="1">
+            <label for="id_departamento">Seleccionar departamento a eliminar:</label>
+            <select name="id_departamento" id="id_departamento" required>
+                <option value="">-- Seleccionar Departamento --</option>
+                @foreach ($departamentos as $departamento)
+                    <option value="{{ $departamento->Id_departamento }}">
+                        {{ $departamento->Nombre }} ({{ $departamento->Ubicacion }}) - {{ $departamento->NombreHospital }}
+                    </option>
+                @endforeach
+            </select>
         </div>
+
         <button type="submit" class="btn-eliminar">Eliminar Departamento</button>
     </form>
 </div>

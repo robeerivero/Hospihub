@@ -47,12 +47,12 @@
 </head>
 <body>
 <header>
-        <nav>
+    <nav>
         <div id="logo">
             <a href="{{ route('menu_admin') }}" style="color: white; text-decoration: none;">HospiHub</a>
         </div>
     </nav>
-    </header>
+</header>
 
 <div id="contenedor">
     <h1>Registrar Departamento <span class="material-symbols-outlined">business</span></h1>
@@ -65,20 +65,26 @@
 
     <form method="POST" action="{{ route('departamentos.insertar') }}">
         @csrf
-
+        
+        <!-- Selección de hospital por nombre -->
         <div class="form-group">
-            <label for="nombre_hospital">Nombre del hospital:</label>
-            <input type="text" name="nombre_hospital" id="nombre_hospital" required value="{{ old('nombre_hospital') }}">
+            <label for="nombre_hospital">Hospital:</label>
+            <select name="nombre_hospital" id="nombre_hospital" required>
+                <option value="">-- Seleccionar Hospital --</option>
+                @foreach ($hospitales as $hospital)
+                    <option value="{{ $hospital->Nombre }}">{{ $hospital->Nombre }}</option>
+                @endforeach
+            </select>
         </div>
-        <br \>
+        
         <div class="form-group">
             <label for="nombre_departamento">Nombre del departamento:</label>
             <input type="text" name="nombre_departamento" id="nombre_departamento" required>
-        </div>        
-        <br \>
+        </div>
+        
         <div class="form-group">
             <label for="ubicacion">Ubicación:</label>
-            <input type="text" name="ubicacion" id="ubicacion" required value="{{ old('ubicacion') }}">
+            <input type="text" name="ubicacion" id="ubicacion" required>
         </div>
 
         <button type="submit">Registrar Departamento</button>

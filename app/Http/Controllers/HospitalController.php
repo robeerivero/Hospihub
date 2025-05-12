@@ -15,7 +15,12 @@ class HospitalController extends Controller
 
     public function formEliminar()
     {
-        return view('eliminar.hospital');
+        // Obtener hospitales con su dirección asociada
+        $hospitales = DB::table('hospital')
+                        ->join('direccion', 'hospital.Id_direccion', '=', 'direccion.Id_direccion')
+                        ->select('hospital.Nombre', 'direccion.Ciudad', 'direccion.Calle')
+                        ->get();
+        return view('eliminar.hospital', compact('hospitales'));
     }
 
     public function formInsertar()
@@ -84,22 +89,38 @@ class HospitalController extends Controller
 
     public function eliminar(Request $request)
     {
-        $nombre = $request->input('nombre_hospital');
-        $mensaje = '';
-        $tipo = '';
+        $request->validate([
+            'nombre_hospital' => 'required|string|max:255'
+        ]);
 
         try {
-            $resultado = DB::select("CALL Eliminar_Hospital(?)", [$nombre]);
-            $mensaje = $resultado[0]->Mensaje ?? 'Operación completada.';
-            $tipo = ($mensaje === 'Hospital eliminado correctamente') ? 'exito' : 'error';
-        } catch (\Illuminate\Database\QueryException $ex) {
-            $mensaje = 'No se puede eliminar el hospital. Puede que tenga departamentos asociados.';
+            $hospitalExiste = DB::table('hospital')->where('Nombre', $request->nombre_hospital)->exists();
+
+            if (!$hospitalExiste) {
+                return redirect()->route('hospitales.eliminar.form')->with([
+                    'mensaje' => 'Error: El hospital especificado no existe.',
+                    'tipo' => 'error'
+                ]);
+            }
+
+            // Llamar al procedimiento almacenado para eliminar el hospital
+            $resultado = DB::select("CALL Eliminar_Hospital(?)", [$request->nombre_hospital]);
+
+            if (!empty($resultado) && isset($resultado[0]->Mensaje)) {
+                $mensaje = $resultado[0]->Mensaje;
+                $tipo = ($mensaje === 'Hospital eliminado correctamente') ? 'exito' : 'error';
+            } else {
+                $mensaje = 'No se recibió respuesta del procedimiento.';
+                $tipo = 'error';
+            }
+
+        } catch (\Exception $e) {
+            $mensaje = 'Error al ejecutar la consulta: ' . $e->getMessage();
             $tipo = 'error';
         }
 
-        return redirect()->route('hospitales.eliminar.form')->with([
-            'mensaje' => $mensaje,
-            'tipo' => $tipo
-        ]);
+        return redirect()->route('hospitales.eliminar.form')
+                        ->with('mensaje', $mensaje)
+                        ->with('tipo', $tipo);
     }
 }
